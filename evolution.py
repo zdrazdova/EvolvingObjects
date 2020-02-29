@@ -5,6 +5,7 @@ from deap import base
 from deap import creator
 from deap import tools
 
+random.seed(5)
 
 class Individual:
     rays = [1/2, 1/8, -1/8, -1/3, -1/2, -2/3, -6/7, -1, -7/6, -3/2, -2, -3, -8, 8, 2]
@@ -30,16 +31,30 @@ def compute_intersections(ind):
     x_dir = ind.right_angle/90
     const = (90 - ind.right_angle)/180
     undirect = 0
+    updated_rays = []
     for ray in ind.rays:
         if (x_dir-ray) != 0:
             inter_x = -const / (x_dir-ray)
             if inter_x > x_low and inter_x < x_up:
                 undirect += 1
-    for ray in ind.rays:
-        x_point = -ind.road  / ray
+                a =  ray
+                b = -1
+                c = 0
+                d = x_dir
+                e = -1
+                f = - const
+                new_slope = (a*e*e - a*d*d - 2*b*d*e)/(b*e*e - b*d*d - 2*a*d*e)
+                inter_y = (c*d - a*f)/(b*d - a*e)
+                const = inter_y - new_slope*inter_x
+                updated_rays.append((new_slope,const))
+            else:
+                updated_rays.append((ray,0))
+
+    for item in updated_rays:
+        x_point = (ind.road + item[1]) / (item[0])
         if x_point > ind.start and x_point < ind.end:
             inter_array.append(x_point)
-    return (inter_array, undirect)
+    return inter_array, undirect
 
 
 def mutate(individual):
@@ -59,7 +74,7 @@ def mate(ind1, ind2):
 def evaluate(individual):
     individual.fitness = individual.right_angle
     #return individual.right_angle
-    (all_intersections, un) = compute_intersections(individual)
+    all_intersections, un = compute_intersections(individual)
     intersections = sorted(all_intersections)
     start = individual.start
     end = individual.end
