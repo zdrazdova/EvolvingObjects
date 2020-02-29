@@ -5,31 +5,49 @@ from deap import base
 from deap import creator
 from deap import tools
 
+
 class Individual:
     rays = [1/2, 1/8, -1/8, -1/3, -1/2, -2/3, -6/7, -1, -7/6, -3/2, -2, -3, -8, 8, 2]
     road = -4000
     start = -1000
     end = 6000
-    right_angle = random.randint(0,90)
-    left_angle = random.randint(0,90)
+    right_angle = random.randint(-90, 90)
     fitness = right_angle
+
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
 
-
 toolbox.register("population", tools.initRepeat, list, Individual)
 
+
+def compute_intersections(ind):
+    inter_array = []
+    x_low = 1/2
+    x_up = 3/2
+    x_dir = ind.right_angle/90
+    const = (90 - ind.right_angle)/180
+    undirect = 0
+    for ray in ind.rays:
+        if (x_dir-ray) != 0:
+            inter_x = -const / (x_dir-ray)
+            if inter_x > x_low and inter_x < x_up:
+                undirect += 1
+    for ray in ind.rays:
+        x_point = -ind.road  / ray
+        if x_point > ind.start and x_point < ind.end:
+            inter_array.append(x_point)
+    return (inter_array, undirect)
+
+
 def mutate(individual):
-    individual.right_angle += random.gauss(0,20)
-    individual.left_angle += random.gauss(0,20)
-    individual.right_angle = max(0, individual.right_angle)
-    individual.left_angle = max(0, individual.left_angle)
+    individual.right_angle += random.randint(-10,10)
+    individual.right_angle = max(-90, individual.right_angle)
     individual.right_angle = min(90, individual.right_angle)
-    individual.left_angle = min(90, individual.left_angle)
     return individual
+
 
 def mate(ind1, ind2):
     right = ind1.right_angle 
@@ -40,31 +58,32 @@ def mate(ind1, ind2):
 
 def evaluate(individual):
     individual.fitness = individual.right_angle
-    return individual.right_angle
-    intersections = sorted(compute_intersections(left, right, line))
-    start = line.start
-    end = line.end
-    section = (end-start)/len(intercestions)
+    #return individual.right_angle
+    (all_intersections, un) = compute_intersections(individual)
+    intersections = sorted(all_intersections)
+    start = individual.start
+    end = individual.end
+    section = (end-start)/len(intersections)
     no_sections = len(intersections)
     i_cnt = 0
     fitness = 0
-    for s in no_sections:
-        if intercestions[i_cnt] > s*section:
+    for s in range(no_sections):
+        if intersections[i_cnt] > s*section:
             upper = (s+1)*section
-            if intercestions[i_cnt] <= upper:
+            if intersections[i_cnt] <= upper:
                 fitness += 1
                 i_cnt +=1
-                while intercestions[i_cnt] <= upper:
+                while intersections[i_cnt] <= upper:
                     fitness -= 1
                     i_cnt += 1
             else:
                 fitness -= 1
-
+    fitness = un
     return fitness
+
 
 toolbox.register("select", tools.selTournament, tournsize=3)
 
-#----------
 
 def main():
     random.seed(64)
@@ -82,14 +101,15 @@ def main():
     
     print("  Evaluated %i individuals" % len(pop))
 
-    # Extracting all the fitnesses of 
+    # Extracting all the fitnesses of
     fits = [ind.fitness for ind in pop]
 
     # Variable keeping track of the number of generations
     g = 0
     
     # Begin the evolution
-    while g < 10:
+    while g < 100:
+        print("Generation")
         # A new generation
         g = g + 1
         print("-- Generation %i --" % g)
@@ -131,21 +151,15 @@ def main():
         
         # Gather all the fitnesses in one list and print the stats
         fits = [ind.fitness for ind in pop]
-        
-        length = len(pop)
-        mean = sum(fits) / length
-        sum2 = sum(x*x for x in fits)
-        std = abs(sum2 / length - mean**2)**0.5
-        
-        print("  Min %s" % min(fits))
-        print("  Max %s" % max(fits))
-        print("  Avg %s" % mean)
-        print("  Std %s" % std)
+
+        best_ind = tools.selBest(pop, 1)[0]
+        print("Best individual is %s, %s" % (best_ind.right_angle, best_ind.fitness))
     
     print("-- End of (successful) evolution --")
     
     best_ind = tools.selBest(pop, 1)[0]
-    print("Best individual is %s, %s, %s" % (best_ind.right_angle, best_ind.left_angle, best_ind.fitness))
+    print("Best individual is %s, %s" % (best_ind.right_angle, best_ind.fitness))
+
 
 if __name__ == "__main__":
     main()
