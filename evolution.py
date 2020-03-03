@@ -7,13 +7,61 @@ from deap import tools
 
 random.seed(5)
 
+
 class Individual:
     rays = [1/2, 1/8, -1/8, -1/3, -1/2, -2/3, -6/7, -1, -7/6, -3/2, -2, -3, -8, 8, 2]
+    upper_ray = rays[0]
     road = -4000
     start = -1000
     end = 6000
     right_angle = random.randint(-90, 90)
+    left_angle = random.randint(-90, 90)
+
     fitness = right_angle
+    reflections = []
+    reflected = []
+    intersections_on = []
+    intersections_out = []
+
+    def draw(self, name):
+        svg_name = name + ".svg"
+        with open(svg_name, "w") as f:
+            x_offset = 1100
+            y_offset = 800
+            f.write('<svg width="8000" height="5000">')
+            f.write('<rect width="8000" height="5000" fill="black"/>')
+            f.write('<rect x="100" y="770" width="100" height="4070" fill="gray"/>')
+            f.write('<rect x="100" y="770" width="1000" height="70" fill="gray"/>')
+            f.write('<rect x="900" y="785" width="400" height="40" fill= "gray" transform = "rotate(-45 1100 800)"/>')
+            f.write('<rect x="1210" y="652" width="400" height="40" fill= "gray" transform = "rotate({0} 1230 672)"/>'.format(45-self.right_angle))
+            f.write('<rect x="950" y="918" width="400" height="40" fill= "gray" transform = "rotate({0} 970 938)"/>'.format(45+self.right_angle))
+
+            f.write('<rect x="100" y="4800" width="7000" height="50" fill="gray"/>')
+            """
+            for c in range(len(self.reflections)):
+                print(c)
+                r = self.reflections[c]
+                i = self.reflected[c]
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:red;stroke-width:0,2" />'.format(x_offset, y_offset, r[0]+x_offset, r[1]+y_offset))
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:blue;stroke-width:0,2" />'.format(r[0] + x_offset, r[1] + y_offset, i + x_offset))
+            
+            for i in self.intersections_on:
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'.format(x_offset, y_offset, i+x_offset, -self.road+y_offset))
+            for i in self.intersections_out:
+                f.write(
+                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 117, 22);stroke-width:20" />'.format(
+                        x_offset, y_offset, i + x_offset, -self.road+y_offset))
+            """
+            for r in self.rays:
+                if r <= self.upper_ray:
+                    x = 10000
+                else:
+                    x = -10000
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 117, 22);stroke-width:20" />'.format(x_offset, y_offset, x+x_offset, -r*x+y_offset))
+            for i in self.intersections_on:
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'.format(x_offset, y_offset, i + x_offset, -self.road + y_offset))
+            f.write('</svg>')
+
 
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -26,6 +74,21 @@ toolbox.register("population", tools.initRepeat, list, Individual)
 
 def compute_intersections(ind):
     inter_array = []
+    inter_array_off = []
+    for item in ind.rays:
+        x_point = ind.road / (item)
+        if x_point > ind.start and x_point < ind.end:
+            inter_array.append(x_point)
+        else:
+            inter_array_off.append(x_point)
+        ind.intersections_on = inter_array
+        ind.intersections_out = inter_array_off
+
+
+
+def compute_reflections(ind):
+    inter_array = []
+    refl_array = []
     x_low = 1/2
     x_up = 3/2
     x_dir = ind.right_angle/90
@@ -37,7 +100,7 @@ def compute_intersections(ind):
             inter_x = -const / (x_dir-ray)
             if inter_x > x_low and inter_x < x_up:
                 undirect += 1
-                a =  ray
+                a = ray
                 b = -1
                 c = 0
                 d = x_dir
@@ -45,15 +108,16 @@ def compute_intersections(ind):
                 f = - const
                 new_slope = (a*e*e - a*d*d - 2*b*d*e)/(b*e*e - b*d*d - 2*a*d*e)
                 inter_y = (c*d - a*f)/(b*d - a*e)
+                refl_array.append((inter_x,inter_y))
                 const = inter_y - new_slope*inter_x
                 updated_rays.append((new_slope,const))
-            else:
-                updated_rays.append((ray,0))
+    ind.reflections = refl_array
 
     for item in updated_rays:
         x_point = (ind.road + item[1]) / (item[0])
-        if x_point > ind.start and x_point < ind.end:
-            inter_array.append(x_point)
+        #if x_point > ind.start and x_point < ind.end:
+        inter_array.append(x_point)
+        ind.reflected = inter_array
     return inter_array, undirect
 
 
@@ -74,7 +138,8 @@ def mate(ind1, ind2):
 def evaluate(individual):
     individual.fitness = individual.right_angle
     #return individual.right_angle
-    all_intersections, un = compute_intersections(individual)
+    all_intersections, un = compute_reflections(individual)
+    """
     intersections = sorted(all_intersections)
     start = individual.start
     end = individual.end
@@ -93,6 +158,7 @@ def evaluate(individual):
                     i_cnt += 1
             else:
                 fitness -= 1
+                """
     fitness = un
     return fitness
 
@@ -101,7 +167,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 def main():
-    random.seed(64)
+
 
     pop = toolbox.population(n=30)
 
@@ -116,6 +182,10 @@ def main():
     
     print("  Evaluated %i individuals" % len(pop))
 
+    compute_intersections(pop[0])
+    pop[0].draw("orig")
+    print(pop[0].right_angle)
+
     # Extracting all the fitnesses of
     fits = [ind.fitness for ind in pop]
 
@@ -123,8 +193,7 @@ def main():
     g = 0
     
     # Begin the evolution
-    while g < 100:
-        print("Generation")
+    while g < 10:
         # A new generation
         g = g + 1
         print("-- Generation %i --" % g)
@@ -173,6 +242,11 @@ def main():
     print("-- End of (successful) evolution --")
     
     best_ind = tools.selBest(pop, 1)[0]
+    print(best_ind.reflections)
+    print("--")
+    print(best_ind.reflected)
+
+    print(best_ind.reflections)
     print("Best individual is %s, %s" % (best_ind.right_angle, best_ind.fitness))
 
 
