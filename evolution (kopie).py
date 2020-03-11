@@ -4,45 +4,18 @@ import random
 from deap import base
 from deap import creator
 from deap import tools
-from sympy.geometry import Line, Ray, Point, Segment
-from sympy import pi, sin, cos
 
 random.seed(5)
 
 
 class Individual:
-
-
-    ray_slopes = [1/2, 1/8, -1/8, -1/3, -1/2, -2/3, -6/7, -1, -7/6, -3/2, -2, -3, -8, 8, 2]
-
-    rays = [
-        Ray(Point(0, 0), Point(1, 1/2)),
-        Ray(Point(0, 0), Point(1, 1/8)),
-        Ray(Point(0, 0), Point(1, -1/8)),
-        Ray(Point(0, 0), Point(1, -1/3)),
-        Ray(Point(0, 0), Point(1, -1/2)),
-        Ray(Point(0, 0), Point(1, -2/3)),
-        Ray(Point(0, 0), Point(1, -6/7)),
-        Ray(Point(0, 0), Point(1, -1)),
-        Ray(Point(0, 0), Point(1, -7/6)),
-        Ray(Point(0, 0), Point(1, -3/2)),
-        Ray(Point(0, 0), Point(1, -2)),
-        Ray(Point(0, 0), Point(1, -3)),
-        Ray(Point(0, 0), Point(1, -8)),
-        Ray(Point(0, 0), Point(-1, -8)),
-        Ray(Point(0, 0), Point(-1, -2))
-    ]
-
-    base = Segment(Point(-141, -141), Point(141, 141))
-
-    upper_ray = rays[0].slope
-    road = Segment(Point(-1000, -4000), Point(6000, -4000))
+    rays = [1/2, 1/8, -1/8, -1/3, -1/2, -2/3, -6/7, -1, -7/6, -3/2, -2, -3, -8, 8, 2]
+    upper_ray = rays[0]
+    road = -4000
     start = -1000
     end = 6000
-    right_angle = random.randint(0,360)
-    left_angle = random.randint(0,360)
-
-
+    right_angle = random.randint(-90, 90)
+    left_angle = random.randint(-90, 90)
 
     fitness = right_angle
     reflections = []
@@ -79,15 +52,14 @@ class Individual:
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 117, 22);stroke-width:20" />'.format(
                         x_offset, y_offset, i + x_offset, -self.road+y_offset))
             """
-
-
             for r in self.rays:
-                x = float(10000*r.points[1].x)
-                y = float(10000*r.points[1].y)
-
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 117, 22);stroke-width:20" />'.format(x_offset, y_offset, x+x_offset, -y+y_offset))
+                if r <= self.upper_ray:
+                    x = 10000
+                else:
+                    x = -10000
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 117, 22);stroke-width:20" />'.format(x_offset, y_offset, x+x_offset, -r*x+y_offset))
             for i in self.intersections_on:
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'.format(x_offset, y_offset, float(i[0].x) + x_offset, 4000 + y_offset))
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'.format(x_offset, y_offset, i + x_offset, -self.road + y_offset))
             f.write('</svg>')
 
 
@@ -102,44 +74,28 @@ toolbox.register("population", tools.initRepeat, list, Individual)
 
 def compute_intersections(ind):
     inter_array = []
-    for ray in ind.rays:
-        print(ray.xdirection)
-        print(ray.ydirection)
-        inter_point = ind.road.intersection(ray)
-        if inter_point != []:
-            inter_array.append(inter_point)
-    ind.intersections_on = inter_array
+    inter_array_off = []
+    for item in ind.rays:
+        x_point = ind.road / (item)
+        if x_point > ind.start and x_point < ind.end:
+            inter_array.append(x_point)
+        else:
+            inter_array_off.append(x_point)
+        ind.intersections_on = inter_array
+        ind.intersections_out = inter_array_off
 
-    print(inter_array)
 
 
 def compute_reflections(ind):
-    right_ray = Ray(ind.base.points[1], angle= ind.right_angle/180 * pi)
-    x_diff = ind.base.length * cos(ind.right_angle/180 * pi)
-    x_diff = ind.base.length * sin(ind.right_angle/180 * pi)
-
-    if right_ray.xdirection == "oo":
-        right_end_x = ind.base.points[1].x + x_diff
-    else:
-        right_end_x = ind.base.points[1].x - x_diff
-    if right_ray.ydirection == "oo":
-        right_end_y = ind.base.points[1].y + y_diff
-    else:
-        right_end_y = ind.base.points[1].y - y_diff
-
-
-    y_diff = ind.base.length * sin(ind.right_angle/180 * pi)
-
     inter_array = []
     refl_array = []
     x_low = 1/2
-    x_up = 100
+    x_up = 3/2
     x_dir = ind.right_angle/90
     const = (90 - ind.right_angle)/180
     undirect = 0
     updated_rays = []
     for ray in ind.rays:
-        ray.intersection(ind.base)
         if (x_dir-ray) != 0:
             inter_x = -const / (x_dir-ray)
             if inter_x > x_low and inter_x < x_up:
@@ -182,7 +138,7 @@ def mate(ind1, ind2):
 def evaluate(individual):
     individual.fitness = individual.right_angle
     #return individual.right_angle
-    #all_intersections, un = compute_reflections(individual)
+    all_intersections, un = compute_reflections(individual)
     """
     intersections = sorted(all_intersections)
     start = individual.start
@@ -203,7 +159,7 @@ def evaluate(individual):
             else:
                 fitness -= 1
                 """
-    fitness = 0
+    fitness = un
     return fitness
 
 
