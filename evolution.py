@@ -10,6 +10,18 @@ from sympy import pi, sin, cos
 random.seed(5)
 
 
+def compute_reflection(ray, surface, intersection):
+    orig_point = ray.p1
+    parallel = surface.parallel_line(orig_point)
+    perpendicular = surface.perpendicular_line(intersection)
+    meet_point = parallel.intersection(perpendicular)[0]
+    x_diff = (meet_point.x - orig_point.x)
+    y_diff = (meet_point.y - orig_point.y)
+    new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
+    reflected_ray = Ray(intersection, new_point)
+    return reflected_ray
+
+
 class Individual:
 
     rays = [
@@ -61,17 +73,29 @@ class Individual:
             for r in self.rays: #všechny paprsky
                 x = float(10000*r.points[1].x)
                 y = float(10000*r.points[1].y)
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20" />'
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20;stroke-dasharray:50,50" />'
                         '\n'.format(x_offset, y_offset, x+x_offset, -y+y_offset))
 
 
             for r in self.reflections:
                 intersection = self.road.intersection(r) #průsečík se silnicí
-                if intersection != []:
+                if intersection:
                     intersection = intersection[0]
                     f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'
                         .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                                 float(intersection.x) + x_offset, -float(intersection.y) + y_offset))
+                    if r.p1 != Point(0,0):
+                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20" />'
+                        .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
+                                0 + x_offset, 0 + y_offset))
+                else:
+                    if r.p1 != Point(0,0):
+                        x_diff = float(r.points[1].x - r.points[0].x) * 10
+                        y_diff = float(r.points[1].y - r.points[0].y) * 10
+
+                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20" />'
+                            '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset, float(r.points[0].x)+x_offset + x_diff, -float(r.points[0].y)+y_offset - y_diff))
+
 
             f.write('<rect x="100" y="5000" width="7000" height="50" fill="gray"/>') #silnice
 
@@ -86,11 +110,44 @@ class Individual:
                 float(self.right_segment.p2.x) + x_offset, float(-self.right_segment.p2.y) + y_offset))
 
             # levá laple
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:pink;stroke-width:40"/>'.format(
+            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
                 self.base.p1.x + x_offset, -self.base.p1.y + y_offset,
                 float(self.left_segment.p2.x) + x_offset, float(-self.left_segment.p2.y) + y_offset))
 
             f.write('</svg>')
+
+    def compute_right_segment(self):
+        base_right_p = self.base.points[1]
+        right_ray = Ray(base_right_p, angle= self.right_angle/180 * pi)
+        x_diff = self.base.length * cos(self.right_angle/180 * pi)
+        y_diff = self.base.length * sin(self.right_angle/180 * pi)
+        if right_ray.xdirection == "oo":
+            right_end_x = base_right_p.x + x_diff
+        else:
+            right_end_x = base_right_p.x - x_diff
+        if right_ray.ydirection == "oo":
+            right_end_y = base_right_p.y + y_diff
+        else:
+            right_end_y = base_right_p.y - y_diff
+
+        self.right_segment = Segment(base_right_p, Point(float(right_end_x),float(right_end_y)))
+
+    def compute_left_segment(self):
+        base_left_p = self.base.points[0]
+        left_ray = Ray(base_left_p, angle= self.left_angle/180 * pi)
+        x_diff = self.base.length * cos(self.left_angle/180 * pi)
+        y_diff = self.base.length * sin(self.left_angle/180 * pi)
+
+        if left_ray.xdirection == "oo":
+            left_end_x = base_left_p.x + x_diff
+        else:
+            left_end_x = base_left_p.x - x_diff
+        if left_ray.ydirection == "oo":
+            left_end_y = base_left_p.y + y_diff
+        else:
+            left_end_y = base_left_p.y - y_diff
+
+        self.left_segment = Segment(base_left_p, Point(float(left_end_x),float(left_end_y)))
 
 
 
@@ -114,37 +171,8 @@ def compute_intersections(ind):
 def compute_reflections(ind):
     compute_intersections(ind)
 
-    base_right_p = ind.base.points[1]
-    right_ray = Ray(base_right_p, angle= ind.right_angle/180 * pi)
-    x_diff = ind.base.length * cos(ind.right_angle/180 * pi)
-    y_diff = ind.base.length * sin(ind.right_angle/180 * pi)
-
-    if right_ray.xdirection == "oo":
-        right_end_x = base_right_p.x + x_diff
-    else:
-        right_end_x = base_right_p.x - x_diff
-    if right_ray.ydirection == "oo":
-        right_end_y = base_right_p.y + y_diff
-    else:
-        right_end_y = base_right_p.y - y_diff
-
-    ind.right_segment = Segment(base_right_p, Point(float(right_end_x),float(right_end_y)))
-
-    base_left_p = ind.base.points[0]
-    left_ray = Ray(base_right_p, angle= ind.left_angle/180 * pi)
-    x_diff = ind.base.length * cos(ind.left_angle/180 * pi)
-    y_diff = ind.base.length * sin(ind.left_angle/180 * pi)
-
-    if left_ray.xdirection == "oo":
-        left_end_x = base_left_p.x + x_diff
-    else:
-        left_end_x = base_left_p.x - x_diff
-    if left_ray.ydirection == "oo":
-        left_end_y = base_left_p.y + y_diff
-    else:
-        left_end_y = base_left_p.y - y_diff
-
-    ind.left_segment = Segment(base_left_p, Point(float(left_end_x),float(left_end_y)))
+    ind.compute_right_segment()
+    ind.compute_left_segment()
 
     updated_rays = []
     reflected = 0
@@ -153,30 +181,14 @@ def compute_reflections(ind):
         if intersection:
             intersection = intersection[0]
             reflected += 1
-            orig_point = ray.p1
-            parallel = ind.right_segment.parallel_line(orig_point)
-            perpendicular = ind.right_segment.perpendicular_line(intersection)
-            meet_point = parallel.intersection(perpendicular)[0]
-            x_diff = (meet_point.x-orig_point.x)
-            y_diff = (meet_point.y-orig_point.y)
-            new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
-
-            reflected_ray = Ray(intersection,new_point)
+            reflected_ray = compute_reflection(ray, ind.right_segment, intersection)
             updated_rays.append(reflected_ray)
         else:
             intersection = ray.intersection(ind.left_segment)
             if intersection:
                 intersection = intersection[0]
                 reflected += 1
-                orig_point = ray.p1
-                parallel = ind.left_segment.parallel_line(orig_point)
-                perpendicular = ind.left_segment.perpendicular_line(intersection)
-                meet_point = parallel.intersection(perpendicular)[0]
-                x_diff = (meet_point.x-orig_point.x)
-                y_diff = (meet_point.y-orig_point.y)
-                new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
-
-                reflected_ray = Ray(intersection,new_point)
+                reflected_ray = compute_reflection(ray, ind.left_segment, intersection)
                 updated_rays.append(reflected_ray)
             else:
                 updated_rays.append(ray)
@@ -194,10 +206,12 @@ def compute_reflections(ind):
 
 
 def mutate(individual):
-    individual.right_angle += random.randint(-10,10)
+    #print("b " + str( individual.right_angle))
+    individual.right_angle += random.randint(-30,30)
     individual.right_angle = max(individual.angle_r_1, individual.right_angle)
     individual.right_angle = min(individual.angle_r_2, individual.right_angle)
-    individual.left_angle += random.randint(-10,10)
+    #print(individual.right_angle)
+    individual.left_angle += random.randint(-30,30)
     individual.left_angle = max(individual.angle_l_1, individual.left_angle)
     individual.left_angle = min(individual.angle_l_2, individual.left_angle)
     return individual
@@ -213,18 +227,24 @@ def mate(ind1, ind2):
 def evaluate(individual):
     individual.fitness = individual.right_angle
     all_intersections, un = compute_reflections(individual)
-    intersections_x = []
-    for i in all_intersections:
-        intersections_x.append(float(i.x))
-
-    intersections = sorted(intersections_x)
     start = individual.start
     end = individual.end
-    section = (end-start)/len(intersections)
+    intersections_x = [start]
+    for i in all_intersections:
+        intersections_x.append(float(i.x))
+    intersections_x.append(end)
+    intersections = sorted(intersections_x)
+
+    section_length = (end-start)/(len(intersections)+1)
     no_sections = len(intersections)+1
-
-
+    fitness = 0
     """
+    for i in range(len(intersections_x)-1):
+        gap = intersections_x[i+1] - intersections_x[i]
+        difference = abs(gap-section_length)
+        fitness -= difference
+
+   
     i_cnt = 0
     fitness = 0
     for s in range(no_sections):
@@ -239,8 +259,8 @@ def evaluate(individual):
             else:
                 fitness -= 1
     """
-    fitness = len(individual.intersections_on)
-    #fitness = un
+    #fitness = len(individual.intersections_on)
+    fitness = un
     return fitness
 
 
@@ -287,13 +307,14 @@ def main():
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
             # cross two individuals with probability CXPB
-            if random.random() < CXPB:
+            if random.random() < 0:
                 mate(child1, child2)
 
                 # fitness values of the children
                 # must be recalculated later
                 child1.fitness = 0
                 child2.fitness = 0
+
 
         for mutant in offspring:
 
@@ -319,7 +340,6 @@ def main():
         best_ind = tools.selBest(pop, 1)[0]
         print("Best individual is %s, %s, %s" % (best_ind.right_angle, best_ind.fitness, best_ind.left_angle))
         best_ind.draw(g)
-        print(best_ind.right_segment)
 
     print("-- End of (successful) evolution --")
 
