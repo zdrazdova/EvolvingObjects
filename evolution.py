@@ -1,5 +1,6 @@
 
 import random
+import copy as cp
 
 from deap import base
 from deap import creator
@@ -12,55 +13,63 @@ random.seed(5)
 
 def compute_reflection(ray, surface, intersection):
     orig_point = ray.p1
+    #print(float(ray.p1.x), float (ray.p1.y))
     parallel = surface.parallel_line(orig_point)
     perpendicular = surface.perpendicular_line(intersection)
     meet_point = parallel.intersection(perpendicular)[0]
     x_diff = (meet_point.x - orig_point.x)
     y_diff = (meet_point.y - orig_point.y)
+    #print(float(x_diff), float(y_diff))
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
+    #print(float(intersection.x), float (intersection.y))
+    #print(float(new_point.x), float (new_point.y))
     reflected_ray = Ray(intersection, new_point)
     return reflected_ray
 
 
 class Individual:
 
-    rays = [
-        Ray(Point(0, 0), Point(1, 1/2)),
-        Ray(Point(0, 0), Point(1, 1/8)),
-        Ray(Point(0, 0), Point(1, -1/8)),
-        Ray(Point(0, 0), Point(1, -1/3)),
-        Ray(Point(0, 0), Point(1, -1/2)),
-        Ray(Point(0, 0), Point(1, -2/3)),
-        Ray(Point(0, 0), Point(1, -6/7)),
-        Ray(Point(0, 0), Point(1, -1)),
-        Ray(Point(0, 0), Point(1, -7/6)),
-        Ray(Point(0, 0), Point(1, -3/2)),
-        Ray(Point(0, 0), Point(1, -2)),
-        Ray(Point(0, 0), Point(1, -3)),
-        Ray(Point(0, 0), Point(1, -8)),
-        Ray(Point(0, 0), Point(-1, -8)),
-        Ray(Point(0, 0), Point(-1, -2))
-    ]
+    def __init__(self):
+        self.rays = [
+        [Ray(Point(0, 0), Point(1, 1/2))],
+        [Ray(Point(0, 0), Point(1, 1/8))],
+        [Ray(Point(0, 0), Point(1, -1/8))],
+        [Ray(Point(0, 0), Point(1, -1/3))],
+        [Ray(Point(0, 0), Point(1, -1/2))],
+        [Ray(Point(0, 0), Point(1, -2/3))],
+        [Ray(Point(0, 0), Point(1, -6/7))],
+        [Ray(Point(0, 0), Point(1, -1))],
+        [Ray(Point(0, 0), Point(1, -7/6))],
+        [Ray(Point(0, 0), Point(1, -3/2))],
+        [Ray(Point(0, 0), Point(1, -2))],
+        [Ray(Point(0, 0), Point(1, -3))],
+        [Ray(Point(0, 0), Point(1, -8))],
+        [Ray(Point(0, 0), Point(-1, -8))],
+        [Ray(Point(0, 0), Point(-1, -2))]
+        ]
 
-    base = Segment(Point(-141, -141), Point(141, 141))
+        self.original_rays = self.rays
 
-    upper_ray = rays[0].slope
-    road = Segment(Point(-1000, -4000), Point(6000, -4000))
-    start = -1000
-    end = 6000
-    angle_r_1 = 90
-    angle_r_2 = 180
-    angle_l_1 = 30
-    angle_l_2 = 120
-    right_angle = random.randint(angle_r_1,angle_r_2)
-    left_angle = random.randint(angle_l_1,angle_l_2)
+        self.base = Segment(Point(-141, -141), Point(141, 141))
 
-    reflections = []
-    reflected = []
-    intersections_on = []
-    intersections_out = []
+        upper_ray = self.rays[0][0].slope
+        self.road = Segment(Point(-1000, -4000), Point(6000, -4000))
+        self.start = -1000
+        self.end = 6000
+        self.angle_r_1 = 90
+        self.angle_r_2 = 180
+        self.angle_l_1 = 30
+        self.angle_l_2 = 120
+        self.right_angle = random.randint(self.angle_r_1,self.angle_r_2)
+        self.left_angle = random.randint(self.angle_l_1,self.angle_l_2)
+
+        reflections = []
+        reflected = []
+        intersections_on = []
+        intersections_out = []
 
     def draw(self, name):
+
         svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
         with open(svg_name, "w") as f:
             x_offset = 1000
@@ -68,8 +77,31 @@ class Individual:
             f.write('<svg width="8000" height="5500">')
             f.write('<rect width="8000" height="5500" fill="black"/>')
             f.write('<rect x="100" y="950" width="100" height="4070" fill="gray"/>') #stožár
-            f.write('<rect x="100" y="950" width="1000" height="70" fill="gray"/>') # výložník + lampa
+            f.write('<rect x="100" y="950" width="900" height="70" fill="gray"/>') # výložník + lampa
 
+            for r_sequence in self.reflected:
+                #print("len")
+                color = "(250, 216, 22)"
+                for r in r_sequence:
+                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-width:20"/>\n'
+                        .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
+                                float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color))
+                intersection = self.road.intersection(r)
+                if intersection:
+                    intersection = intersection[0]
+                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(250, 216, 22);stroke-width:20"/>\n'
+                    .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
+                            float(intersection.x) + x_offset, - float(intersection.y) + y_offset))
+                else:
+                    x_diff = float(r.points[1].x - r.points[0].x) * 10000
+                    y_diff = float(r.points[1].y - r.points[0].y) * 10000
+                    f.write(
+                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20"/>'
+                        '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
+                                    float(r.points[0].x) + x_offset + x_diff,
+                                    -float(r.points[0].y) + y_offset - y_diff))
+
+            """
             for r in self.rays: #všechny paprsky
                 x = float(10000*r.points[1].x)
                 y = float(10000*r.points[1].y)
@@ -92,10 +124,11 @@ class Individual:
                     if r.p1 != Point(0,0):
                         x_diff = float(r.points[1].x - r.points[0].x) * 10
                         y_diff = float(r.points[1].y - r.points[0].y) * 10
+                        
 
                         f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20" />'
                             '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset, float(r.points[0].x)+x_offset + x_diff, -float(r.points[0].y)+y_offset - y_diff))
-
+            """
 
             f.write('<rect x="100" y="5000" width="7000" height="50" fill="gray"/>') #silnice
 
@@ -162,7 +195,7 @@ toolbox.register("population", tools.initRepeat, list, Individual)
 def compute_intersections(ind):
     inter_array = []
     for ray in ind.rays:
-        inter_point = ind.road.intersection(ray)
+        inter_point = ind.road.intersection(ray[-1])
         if inter_point != []:
             inter_array.append(inter_point)
     ind.intersections_on = inter_array
@@ -174,34 +207,54 @@ def compute_reflections(ind):
     ind.compute_right_segment()
     ind.compute_left_segment()
 
-    updated_rays = []
     reflected = 0
-    for ray in ind.rays:
-        intersection = ray.intersection(ind.right_segment)
-        if intersection:
-            intersection = intersection[0]
-            reflected += 1
-            reflected_ray = compute_reflection(ray, ind.right_segment, intersection)
-            updated_rays.append(reflected_ray)
-        else:
-            intersection = ray.intersection(ind.left_segment)
-            if intersection:
-                intersection = intersection[0]
+    #print("new_ind")
+    #print(ind)
+    reflected_rays = []
+    for ray in ind.original_rays:
+        new_ray = cp.deepcopy(ray)
+        #print("new_ray")
+        #print(ray)
+        continue_left = True
+        continue_right = True
+        previous_i_r = Point(0,0)
+        previous_i_l = Point(0,0)
+        while continue_left or continue_right:
+            #print(reflected)
+            #print(float(previous_i_r.x), float(previous_i_r.y))
+            continue_left = False
+            continue_right = False
+            intersection_r = new_ray[-1].intersection(ind.right_segment)
+            if intersection_r and intersection_r[0] != previous_i_r:
+                #print("R")
+                previous_i_r = intersection_r[0]
+                intersection = intersection_r[0]
                 reflected += 1
-                reflected_ray = compute_reflection(ray, ind.left_segment, intersection)
-                updated_rays.append(reflected_ray)
-            else:
-                updated_rays.append(ray)
-
-    ind.reflections = updated_rays
+                reflected_ray = compute_reflection(new_ray[-1], ind.right_segment, intersection)
+                new_ray[-1] = Ray(new_ray[-1].p1,intersection)
+                new_ray.append(reflected_ray)
+                continue_right = True
+            intersection_l = new_ray[-1].intersection(ind.left_segment)
+            if intersection_l and intersection_l[0] != previous_i_l:
+                #print("L")
+                previous_i_l = intersection_l[0]
+                intersection = intersection_l[0]
+                reflected += 1
+                reflected_ray = compute_reflection(new_ray[-1], ind.left_segment, intersection)
+                new_ray[-1] = Ray(new_ray[-1].p1,intersection)
+                new_ray.append(reflected_ray)
+                continue_left = True
+        reflected_rays.append(new_ray)
+    ind.reflected = reflected_rays
     intersections = []
-    for r in updated_rays:
-        intersection = ind.road.intersection(r)  # průsečík se silnicí
+    """
+    for r in ind.rays:
+        intersection = ind.road.intersection(r[-1])  # průsečík se silnicí
         if intersection:
             intersections.append(intersection[0])
 
     ind.intersections_on = intersections
-
+    """
     return intersections, reflected
 
 
@@ -259,8 +312,8 @@ def evaluate(individual):
             else:
                 fitness -= 1
     """
-    #fitness = len(individual.intersections_on)
-    fitness = un
+    fitness = len(individual.intersections_on)
+    #fitness = un
     return fitness
 
 
@@ -281,6 +334,9 @@ def main():
         ind.fitness = fit
 
     print("  Evaluated %i individuals" % len(pop))
+
+    #for i in range(len(pop)):
+        #pop[i].draw(i)
 
     compute_intersections(pop[0])
     pop[0].draw("orig")
@@ -344,11 +400,9 @@ def main():
     print("-- End of (successful) evolution --")
 
     best_ind = tools.selBest(pop, 1)[0]
-    print(best_ind.reflections)
     print("--")
     print(best_ind.reflected)
 
-    print(best_ind.reflections)
     print("Best individual is %s, %s, %s" % (best_ind.right_angle, best_ind.fitness, best_ind.left_angle))
 
 
