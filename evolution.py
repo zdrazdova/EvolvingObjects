@@ -33,17 +33,42 @@ class Individual:
         self.rays = [
         [Ray(Point(0, 0), Point(1, 1/2))],
         [Ray(Point(0, 0), Point(1, 1/8))],
+        [Ray(Point(0, 0), Point(1, 1/12))],
+        [Ray(Point(0, 0), Point(1, 1/20))],
+        [Ray(Point(0, 0), Point(1, -1/20))],
+        [Ray(Point(0, 0), Point(1, -1/12))],
+        [Ray(Point(0, 0), Point(1, -1/10))],
         [Ray(Point(0, 0), Point(1, -1/8))],
+        [Ray(Point(0, 0), Point(1, -1/6))],
+        [Ray(Point(0, 0), Point(1, -1/4))],
         [Ray(Point(0, 0), Point(1, -1/3))],
+        [Ray(Point(0, 0), Point(1, -3/5))],
         [Ray(Point(0, 0), Point(1, -1/2))],
         [Ray(Point(0, 0), Point(1, -2/3))],
-        [Ray(Point(0, 0), Point(1, -6/7))],
-        [Ray(Point(0, 0), Point(1, -1))],
-        [Ray(Point(0, 0), Point(1, -7/6))],
+        [Ray(Point(0, 0), Point(1, -3/4))],
+        [Ray(Point(0, 0), Point(1, -4/5))],
+        [Ray(Point(0, 0), Point(1, -5/6))],
+        [Ray(Point(0, 0), Point(1, -8/9))],
+        [Ray(Point(0, 0), Point(1, -14/15))],
+        [Ray(Point(0, 0), Point(1, -19/20))],
+        [Ray(Point(0, 0), Point(1, -20/19))],
+        [Ray(Point(0, 0), Point(1, -15/14))],
+        [Ray(Point(0, 0), Point(1, -9/8))],
+        [Ray(Point(0, 0), Point(1, -6/5))],
+        [Ray(Point(0, 0), Point(1, -5/4))],
+        [Ray(Point(0, 0), Point(1, -4/3))],
         [Ray(Point(0, 0), Point(1, -3/2))],
         [Ray(Point(0, 0), Point(1, -2))],
+        [Ray(Point(0, 0), Point(1, -5/3))],
         [Ray(Point(0, 0), Point(1, -3))],
+        [Ray(Point(0, 0), Point(1, -4))],
+        [Ray(Point(0, 0), Point(1, -6))],
         [Ray(Point(0, 0), Point(1, -8))],
+        [Ray(Point(0, 0), Point(1, -10))],
+        [Ray(Point(0, 0), Point(1, -12))],
+        [Ray(Point(0, 0), Point(1, -20))],
+        [Ray(Point(0, 0), Point(-1, -20))],
+        [Ray(Point(0, 0), Point(-1, -12))],
         [Ray(Point(0, 0), Point(-1, -8))],
         [Ray(Point(0, 0), Point(-1, -2))]
         ]
@@ -129,8 +154,12 @@ class Individual:
                         f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb(196, 185, 118);stroke-width:20" />'
                             '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset, float(r.points[0].x)+x_offset + x_diff, -float(r.points[0].y)+y_offset - y_diff))
             """
+            step = 7000 / 40
+            for i in range(20):
+                f.write('<rect x="{0}" y="5000" width="{1}" height="50" fill="gray"/>'.format(i*step*2,step)) #silnice
 
-            f.write('<rect x="100" y="5000" width="7000" height="50" fill="gray"/>') #silnice
+
+
 
             #základna
             f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
@@ -247,24 +276,24 @@ def compute_reflections(ind):
         reflected_rays.append(new_ray)
     ind.reflected = reflected_rays
     intersections = []
-    """
-    for r in ind.rays:
+
+    for r in ind.reflected:
         intersection = ind.road.intersection(r[-1])  # průsečík se silnicí
         if intersection:
             intersections.append(intersection[0])
 
     ind.intersections_on = intersections
-    """
+
     return intersections, reflected
 
 
 def mutate(individual):
     #print("b " + str( individual.right_angle))
-    individual.right_angle += random.randint(-30,30)
+    individual.right_angle += random.randint(-5,5)
     individual.right_angle = max(individual.angle_r_1, individual.right_angle)
     individual.right_angle = min(individual.angle_r_2, individual.right_angle)
     #print(individual.right_angle)
-    individual.left_angle += random.randint(-30,30)
+    individual.left_angle += random.randint(-5,5)
     individual.left_angle = max(individual.angle_l_1, individual.left_angle)
     individual.left_angle = min(individual.angle_l_2, individual.left_angle)
     return individual
@@ -282,15 +311,23 @@ def evaluate(individual):
     all_intersections, un = compute_reflections(individual)
     start = individual.start
     end = individual.end
-    intersections_x = [start]
+    intersections_x = []
     for i in all_intersections:
         intersections_x.append(float(i.x))
-    intersections_x.append(end)
+    #intersections_x.append(end)
     intersections = sorted(intersections_x)
 
     section_length = (end-start)/(len(intersections)+1)
     no_sections = len(intersections)+1
+    parts = 40
+    part_length = (end-start) / 40
     fitness = 0
+    for p in range(parts):
+        counter = 0
+        for i in intersections:
+            if i > start + p*part_length and i <= start + (p+1)*part_length:
+                counter += 1
+        fitness += abs(counter - 1)
     """
     for i in range(len(intersections_x)-1):
         gap = intersections_x[i+1] - intersections_x[i]
@@ -312,9 +349,9 @@ def evaluate(individual):
             else:
                 fitness -= 1
     """
-    fitness = len(individual.intersections_on)
+    #fitness = len(all_intersections)
     #fitness = un
-    return fitness
+    return -fitness
 
 
 toolbox.register("select", tools.selTournament, tournsize=3)
@@ -324,7 +361,7 @@ def main():
 
     pop = toolbox.population(n=30)
 
-    CXPB, MUTPB = 0.5, 0.2
+    CXPB, MUTPB = 0.5, 0.4
 
     print("Start of evolution")
 
@@ -392,9 +429,12 @@ def main():
 
         # Gather all the fitnesses in one list and print the stats
         fits = [ind.fitness for ind in pop]
+        print(fits)
+        rang = [ind.right_angle for ind in pop]
+        print(rang)
 
         best_ind = tools.selBest(pop, 1)[0]
-        print("Best individual is %s, %s, %s" % (best_ind.right_angle, best_ind.fitness, best_ind.left_angle))
+        print("Best individual is %s, %s, %s" % (best_ind.left_angle, best_ind.fitness, best_ind.right_angle))
         best_ind.draw(g)
 
     print("-- End of (successful) evolution --")
@@ -403,7 +443,7 @@ def main():
     print("--")
     print(best_ind.reflected)
 
-    print("Best individual is %s, %s, %s" % (best_ind.right_angle, best_ind.fitness, best_ind.left_angle))
+    print("Best individual is %s, %s, %s" % (best_ind.left_angle, best_ind.fitness, best_ind.right_angle))
 
 
 if __name__ == "__main__":
