@@ -124,8 +124,8 @@ class Individual:
                                 float(intersection.x) + x_offset, - float(intersection.y) + y_offset,
                                 color, alpha))
                 else:
-                    x_diff = float(r.points[1].x - r.points[0].x) * 100
-                    y_diff = float(r.points[1].y - r.points[0].y) * 100
+                    x_diff = float(r.points[1].x - r.points[0].x) * 5
+                    y_diff = float(r.points[1].y - r.points[0].y) * 5
                     f.write(
                         '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
                         '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
@@ -192,6 +192,11 @@ class Individual:
 
 
 def compute_reflection(ray, surface, intersection):
+    if ray.p1 == intersection:
+        return []
+    print(ray)
+    print((surface))
+    print("intersection" + str(intersection))
     orig_point = ray.p1
     parallel = surface.parallel_line(orig_point)
     perpendicular = surface.perpendicular_line(intersection)
@@ -199,7 +204,7 @@ def compute_reflection(ray, surface, intersection):
     x_diff = (meet_point.x - orig_point.x)
     y_diff = (meet_point.y - orig_point.y)
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
-
+    print(intersection, new_point)
     reflected_ray = Ray(intersection, new_point)
     return reflected_ray
 
@@ -235,7 +240,6 @@ def compute_reflections(ind):
     ind.compute_right_segment()
     ind.compute_left_segment()
     for ray in ind.original_rays:
-        new_ray = cp.deepcopy(ray)
         continue_left = True
         continue_right = True
         previous_i_r = Point(0, 0)
@@ -243,36 +247,28 @@ def compute_reflections(ind):
         while continue_left or continue_right:
             continue_left = False
             continue_right = False
-            intersection_r = new_ray.ray.intersection(ind.right_segment)
+            last_ray = ray.ray_array[-1]
+            intersection_r = last_ray.intersection(ind.right_segment)
             if intersection_r and intersection_r[0] != previous_i_r:
                 previous_i_r = intersection_r[0]
                 intersection = intersection_r[0]
-                reflected += 1
-                reflected_ray = compute_reflection(new_ray.ray, ind.right_segment, intersection)
-                new_ray.ray = Ray(new_ray.ray.p1, intersection)
-                new_ray.append(reflected_ray)
+                reflected_ray = compute_reflection(last_ray, ind.right_segment, intersection)
+                new_ray_array = ray.ray_array[:-1]
+                new_ray_array.append(Ray(last_ray.p1, intersection_r[0]))
+                new_ray_array.append(reflected_ray)
+                ray.ray_array = new_ray_array
                 continue_right = True
-            intersection_l = new_ray.ray.intersection(ind.left_segment)
+            last_ray = ray.ray_array[-1]
+            intersection_l = last_ray.intersection(ind.left_segment)
             if intersection_l and intersection_l[0] != previous_i_l:
                 previous_i_l = intersection_l[0]
                 intersection = intersection_l[0]
-                reflected += 1
-                reflected_ray = compute_reflection(new_ray.ray, ind.left_segment, intersection)
-                new_ray.ray = Ray(new_ray[-1].p1, intersection)
-                new_ray.append(reflected_ray)
+                reflected_ray = compute_reflection(last_ray, ind.left_segment, intersection)
+                new_ray_array = ray.ray_array[:-1]
+                new_ray_array.append(Ray(last_ray.p1, intersection_l[0]))
+                new_ray_array.append(reflected_ray)
+                ray.ray_array = new_ray_array
                 continue_left = True
-        reflected_rays.append(new_ray)
-    ind.reflected = reflected_rays
-    intersections = []
-
-    for r in ind.reflected:
-        intersection = ind.road.intersection(r.ray)  # průsečík se silnicí
-        if intersection:
-            intersections.append(intersection[0])
-
-    ind.intersections_on = intersections
-
-    return intersections, reflected
 
 
 def mutate_angle(individual):
@@ -307,6 +303,7 @@ def mate(ind1, ind2):
 
 
 def evaluate_simple(individual):
+    print("SIMPLE")
     compute_reflections_right(individual)
     compute_intersections(individual)
     print(individual.intersections_on_intensity)
@@ -420,10 +417,12 @@ def evolution():
             # mutate an individual with probability mut_angle_prob
             if random.random() < 0.3:
                 mutate_angle(mutant)
+                print("angle")
                 mutant.fitness = 0
 
             if random.random() < 0.5:
                 mutate_length(mutant)
+                print("length")
                 mutant.fitness = 0
 
 
