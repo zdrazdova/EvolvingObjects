@@ -93,8 +93,8 @@ class Individual:
             if (config.road.start < 0):
                 x_offset += abs(config.road.start)
             y_offset = 1000
-            f.write('<svg width="{0}" height="{1}">'.format(config.road.end + x_offset + 1000, abs(config.road.depth) + 2000))
-            f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(config.road.end + x_offset + 1000, abs(config.road.depth) + 2000))
+            f.write('<svg width="{0}" height="{1}">'.format(config.road.end - config.road.start + 2000, abs(config.road.depth) + 2000))
+            f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(config.road.end - config.road.start + 2000, abs(config.road.depth) + 2000))
             # f.write('<rect x="950" y="950" width="100" height="4070" fill="gray"/>') #stožár
             # f.write('<rect x="100" y="950" width="900" height="70" fill="gray"/>') # výložník + lampa
 
@@ -193,11 +193,10 @@ class Individual:
 
 def compute_reflection(ray, surface, intersection):
     if ray.p1 == intersection:
-        print("same")
         return []
-    #print(ray)
-    #print((surface))
-    #print("intersection" + str(intersection))
+    print(ray)
+    print((surface))
+    print("intersection" + str(intersection))
     orig_point = ray.p1
     parallel = surface.parallel_line(orig_point)
     perpendicular = surface.perpendicular_line(intersection)
@@ -205,7 +204,7 @@ def compute_reflection(ray, surface, intersection):
     x_diff = (meet_point.x - orig_point.x)
     y_diff = (meet_point.y - orig_point.y)
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
-    #print(intersection, new_point)
+    print(intersection, new_point)
     reflected_ray = Ray(intersection, new_point)
     return reflected_ray
 
@@ -237,40 +236,20 @@ def compute_reflections_right(ind):
             ray.ray_array = new_ray
 
 
-def print_ray(ray):
-    x1 = round(float(ray.p1.x),2)
-    y1 = round(float(ray.p1.y),2)
-    x2 = round(float(ray.p2.x),2)
-    y2 = round(float(ray.p2.y),2)
-    print("Ray ", "X: ", x1,"Y: ", y1, " - ", "X: ", x2,"Y: ", y2)
-
-
-def print_point(point):
-    x = round(float(point.x),2)
-    y = round(float(point.y),2)
-    print("X: ", x,"Y: ", y)
-
-
-def compute_reflections_two_segments(ind):
+def compute_reflections(ind):
     ind.compute_right_segment()
     ind.compute_left_segment()
     for ray in ind.original_rays:
-        #print("NEW ")
         continue_left = True
         continue_right = True
         previous_i_r = Point(0, 0)
         previous_i_l = Point(0, 0)
-        ray.ray_array=[ray.ray]
         while continue_left or continue_right:
             continue_left = False
             continue_right = False
             last_ray = ray.ray_array[-1]
             intersection_r = last_ray.intersection(ind.right_segment)
-            #print("right ", len(intersection_r))
-
             if intersection_r and intersection_r[0] != previous_i_r:
-                #print_ray(last_ray)
-                #print_point(intersection_r[0])
                 previous_i_r = intersection_r[0]
                 intersection = intersection_r[0]
                 reflected_ray = compute_reflection(last_ray, ind.right_segment, intersection)
@@ -278,13 +257,10 @@ def compute_reflections_two_segments(ind):
                 new_ray_array.append(Ray(last_ray.p1, intersection_r[0]))
                 new_ray_array.append(reflected_ray)
                 ray.ray_array = new_ray_array
-                continue_left = True
+                continue_right = True
             last_ray = ray.ray_array[-1]
             intersection_l = last_ray.intersection(ind.left_segment)
-            #print("left ", len(intersection_l))
             if intersection_l and intersection_l[0] != previous_i_l:
-                #print_ray(last_ray)
-                #print_point(intersection_l[0])
                 previous_i_l = intersection_l[0]
                 intersection = intersection_l[0]
                 reflected_ray = compute_reflection(last_ray, ind.left_segment, intersection)
@@ -292,32 +268,7 @@ def compute_reflections_two_segments(ind):
                 new_ray_array.append(Ray(last_ray.p1, intersection_l[0]))
                 new_ray_array.append(reflected_ray)
                 ray.ray_array = new_ray_array
-                continue_right = True
-
-def compute_reflections_multiple_segments(ind):
-    segments = ind.all_segments
-    timeout = 4
-    iteration = 0
-    for ray in ind.original_rays:
-        array = [ray]
-        while reflection_exists and iteration < timeout:
-            iteration += 1
-            reflection_exists = False
-            min_positive_length = float('inf')
-            suitable_segment = segments[0]
-            for segment in segments:
-                intersection = compute_intersection(ray, segment)
-                if intersection_exists:
-                    reflection_exists = True
-                    segment_length = length_of_segment(start, intersection)
-                    if (0 < segment_length < min_positive_length):
-                        min_positive_length = segment_length
-                        suitable_segment = segment
-                else:
-                    segment_length = 0
-            reflected_ray = compute_reflection(ray, segment, intersection)
-            
-            modified_ = [Ray(ray.p1, intersection), reflected_ray]
+                continue_left = True
 
 
 def mutate_angle(individual):
@@ -352,12 +303,12 @@ def mate(ind1, ind2):
 
 
 def evaluate_simple(individual):
-    #print("SIMPLE")
-    compute_reflections_two_segments(individual)
+    print("SIMPLE")
+    compute_reflections_right(individual)
     compute_intersections(individual)
-    #print(individual.intersections_on_intensity)
-    #print(len(individual.intersections_on))
-    return len(individual.intersections_on)
+    print(individual.intersections_on_intensity)
+    print(len(individual.intersections_on))
+    return individual.intersections_on_intensity
 
 
 def evaluate(individual):
@@ -466,12 +417,12 @@ def evolution():
             # mutate an individual with probability mut_angle_prob
             if random.random() < 0.3:
                 mutate_angle(mutant)
-                #print("angle")
+                print("angle")
                 mutant.fitness = 0
 
-            if random.random() < 0.3:
+            if random.random() < 0.5:
                 mutate_length(mutant)
-                #print("length")
+                print("length")
                 mutant.fitness = 0
 
 
@@ -489,16 +440,16 @@ def evolution():
         #hof.update(pop)
         # Gather all the fitnesses in one list and print the stats
         fits = [ind.fitness for ind in pop]
-        #print(fits)
+        print(fits)
         rang = [ind.right_angle for ind in pop]
-        #print(rang)
+        print(rang)
 
         best_ind = tools.selBest(pop, 1)[0]
         best_ind = hof[0]
 
-        print("Best individual is %s, %s, %s, %s, %s, %s, %s" % (best_ind.left_length_coef, best_ind.left_angle,
-                                                         best_ind.intersections_on_intensity, best_ind.fitness, len(best_ind.intersections_on),
-                                                         best_ind.right_angle, best_ind.right_length_coef))
+        print("Best individual is %s, %s, %s, %s, %s" % (best_ind.left_length_coef, best_ind.left_angle,
+                                                         best_ind.fitness, best_ind.right_angle,
+                                                         best_ind.right_length_coef))
         line = line + ", " + str(best_ind.fitness)
         best_ind.draw("best"+str(g))
 
@@ -522,7 +473,7 @@ def evolution():
 # create config parser
 builder = ConfigBuilder()
 
-# parse configuration from file parameters.json
+# parse config
 config = builder.parse_config('parameters.json')
 
 
