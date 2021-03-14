@@ -46,6 +46,7 @@ class Individual:
         self.road = Segment(Point(config.road.start, config.road.depth), Point(config.road.end, config.road.depth))
         self.start = config.road.start
         self.end = config.road.end
+        self.road_length = (self.end - self.start)
 
         self.angle_limit_min = config.lamp.angle_lower_bound + self.base_slope
         self.angle_limit_max = config.lamp.angle_upper_bound + self.base_slope
@@ -70,6 +71,8 @@ class Individual:
         self.intersections_on = []
         self.intersections_on_intensity = 0
         self.intersections_out = []
+        self.no_of_reflections = 0
+        self.segments_intensity = []
 
     # Sampling given number of rays, base angle is used for intensity calculations
     def sample_rays(self, number_of_rays, distribution, base_angle):
@@ -124,8 +127,8 @@ class Individual:
                                 float(intersection.x) + x_offset, - float(intersection.y) + y_offset,
                                 color, alpha))
                 else:
-                    x_diff = float(r.points[1].x - r.points[0].x) * 5
-                    y_diff = float(r.points[1].y - r.points[0].y) * 5
+                    x_diff = float(r.points[1].x - r.points[0].x) * 50
+                    y_diff = float(r.points[1].y - r.points[0].y) * 50
                     f.write(
                         '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
                         '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
@@ -137,6 +140,18 @@ class Individual:
             f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
                     .format(self.road.p1.x + x_offset, -self.road.p1.y + y_offset,
                             (self.road.p2.x-self.road.p1.x)))  # road
+
+            left_border = self.start
+            segments_size = self.road_length / config.road.sections
+
+            for segment in range(config.road.sections):
+                alpha = str(round(self.segments_intensity[segment], 3))
+                color = "(250, 6, 22)"
+
+                f.write('<rect x="{0}" y="{1}" width="{2}" height="50" style="fill:rgb{3};fill-opacity:{4};"/>'
+                        .format(left_border + x_offset, -self.road.p1.y + y_offset,
+                                (segments_size), color, alpha ))
+                left_border += segments_size
 
             # Base
             f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
@@ -218,23 +233,11 @@ def compute_intersections(ind):
         inter_point = ind.road.intersection(ray.ray_array[-1])
         if inter_point != []:
             intensity_sum += ray.intensity
-            inter_array.append(inter_point)
+            inter_array.append(inter_point[0].x)
     # print(len(ind.original_rays))
     # print(inter_array)
     ind.intersections_on = inter_array
     ind.intersections_on_intensity = intensity_sum
-
-
-def compute_reflections_right(ind):
-    ind.compute_right_segment()
-    for ray in ind.original_rays:
-        previous_i_r = Point(0, 0)
-        intersection_r = ray.ray_array[0].intersection(ind.right_segment)
-        if intersection_r and intersection_r[0] != previous_i_r:
-            reflected_ray = compute_reflection(ray.ray_array[0], ind.right_segment, intersection_r[0])
-            new_ray = [Ray(ray.ray_array[0].p1,intersection_r[0]), reflected_ray]
-
-            ray.ray_array = new_ray
 
 
 def print_ray(ray):
@@ -251,9 +254,21 @@ def print_point(point):
     print("X: ", x,"Y: ", y)
 
 
+
+def print_point_array(points):
+    outcome = "[ "
+    for point in points:
+        x = str(round(float(point.x),2))
+        y = str(round(float(point.y),2))
+        outcome += "(" + x + ", " + y + "), "
+    outcome += "]"
+    print(outcome)
+
+
 def compute_reflections_two_segments(ind):
     ind.compute_right_segment()
     ind.compute_left_segment()
+    no_of_reflections = 0
     for ray in ind.original_rays:
         #print("NEW ")
         continue_left = True
@@ -274,6 +289,7 @@ def compute_reflections_two_segments(ind):
                 previous_i_r = intersection_r[0]
                 intersection = intersection_r[0]
                 reflected_ray = compute_reflection(last_ray, ind.right_segment, intersection)
+                no_of_reflections += 1
                 new_ray_array = ray.ray_array[:-1]
                 new_ray_array.append(Ray(last_ray.p1, intersection_r[0]))
                 new_ray_array.append(reflected_ray)
@@ -288,11 +304,14 @@ def compute_reflections_two_segments(ind):
                 previous_i_l = intersection_l[0]
                 intersection = intersection_l[0]
                 reflected_ray = compute_reflection(last_ray, ind.left_segment, intersection)
+                no_of_reflections += 1
                 new_ray_array = ray.ray_array[:-1]
                 new_ray_array.append(Ray(last_ray.p1, intersection_l[0]))
                 new_ray_array.append(reflected_ray)
                 ray.ray_array = new_ray_array
                 continue_right = True
+    ind.no_of_reflections = no_of_reflections
+
 
 def compute_reflections_multiple_segments(ind):
     segments = ind.all_segments
@@ -351,12 +370,51 @@ def mate(ind1, ind2):
     return ind1, ind2
 
 
+def prepare_intersections(points):
+    x_coordinates = []
+    for point in points:
+        x_coordinates.append(float(point))
+    return sorted(x_coordinates)
+
+
+def compute_road_segments(ind):
+    segments_size = ind.road_length / config.road.sections
+    segments_intensity = [0] * config.road.sections
+    intersections = prepare_intersections(ind.intersections_on)
+    print(intersections)
+    left_border = ind.start
+    right_border = ind.start
+    counter = 0
+    for segment in range(config.road.sections):
+        left_border = right_border
+        right_border += segments_size
+        stay = True
+        while stay and counter < len(intersections):
+            stay = False
+            if left_border <= intersections[counter] < right_border:
+                segments_intensity[segment] += 1
+                counter += 1
+                stay = True
+    segments_intensity_proportional = [0] * config.road.sections
+    for segment in range(config.road.sections):
+        segments_intensity_proportional[segment] = segments_intensity[segment] / len(intersections)
+    ind.segments_intensity = segments_intensity_proportional
+
+    print(segments_intensity)
+    print(segments_intensity_proportional)
+
+
+
+
+
 def evaluate_simple(individual):
     #print("SIMPLE")
     compute_reflections_two_segments(individual)
     compute_intersections(individual)
     #print(individual.intersections_on_intensity)
     #print(len(individual.intersections_on))
+    #print(individual.intersections_on)
+    compute_road_segments(individual)
     return len(individual.intersections_on)
 
 
@@ -412,7 +470,7 @@ def evolution():
     mut_base_prob = config.evolution.operators.mutation.base_mutation_prob
 
     # Initiating elitism
-    hof = HallOfFame(1)
+    #hof = HallOfFame(1)
 
     fitnesses = list(map(evaluate_simple, pop))
     for ind, fit in zip(pop, fitnesses):
@@ -484,7 +542,7 @@ def evolution():
         print("  Evaluated %i individuals" % len(invalid_ind))
         # The population is entirely replaced by the offspring
         pop[:] = offspring
-        hof.update(pop)
+        #hof.update(pop)
 
         #hof.update(pop)
         # Gather all the fitnesses in one list and print the stats
@@ -494,10 +552,10 @@ def evolution():
         #print(rang)
 
         best_ind = tools.selBest(pop, 1)[0]
-        best_ind = hof[0]
+        #best_ind = hof[0]
 
         print("Best individual is %s, %s, %s, %s, %s, %s, %s" % (best_ind.left_length_coef, best_ind.left_angle,
-                                                         best_ind.intersections_on_intensity, best_ind.fitness, len(best_ind.intersections_on),
+                                                         best_ind.intersections_on_intensity, best_ind.fitness, ind.no_of_reflections,
                                                          best_ind.right_angle, best_ind.right_length_coef))
         line = line + ", " + str(best_ind.fitness)
         best_ind.draw("best"+str(g))
