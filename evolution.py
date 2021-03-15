@@ -36,27 +36,18 @@ class Individual:
 
         self.angle_limit_min = config.lamp.angle_lower_bound + self.base_slope
         self.angle_limit_max = config.lamp.angle_upper_bound + self.base_slope
-
         self.right_angle = random.randint(self.angle_limit_min, self.angle_limit_max)
         self.left_angle = random.randint(self.angle_limit_min, self.angle_limit_max) - 90
 
-        self.length_limit_max = config.lamp.length_lower_bound
-        self.length_limit_min = config.lamp.length_upper_bound
-        self.length_limit_diff = self.length_limit_max - self.length_limit_min
-
-        self.left_length_coef = random.random() * self.length_limit_diff + self.length_limit_min
-        self.right_length_coef = random.random() * self.length_limit_diff + self.length_limit_min
-
-
+        self.length_limit_diff = config.lamp.length_upper_bound - config.lamp.length_lower_bound
+        self.left_length_coef = random.random() * self.length_limit_diff + config.lamp.length_lower_bound
+        self.right_length_coef = random.random() * self.length_limit_diff + config.lamp.length_lower_bound
 
         self.compute_right_segment()
         self.compute_left_segment()
 
-        self.reflections = []
-        self.reflected = []
         self.intersections_on = []
         self.intersections_on_intensity = 0
-        self.intersections_out = []
         self.no_of_reflections = 0
         self.segments_intensity = []
 
@@ -131,8 +122,9 @@ def compute_road_segments(ind):
                 counter += 1
                 stay = True
     segments_intensity_proportional = [0] * config.road.sections
+    max_intensity = max(segments_intensity)
     for segment in range(config.road.sections):
-        segments_intensity_proportional[segment] = segments_intensity[segment] / len(intersections)
+        segments_intensity_proportional[segment] = segments_intensity[segment] / max_intensity
     ind.segments_intensity = segments_intensity_proportional
 
     #print(segments_intensity)
@@ -143,6 +135,8 @@ def evaluate(individual):
     cg.compute_reflections_two_segments(individual)
     cg.compute_intersections(individual)
     compute_road_segments(individual)
+    efficienty = len(individual.intersections_on)
+    no_reflections = individual.no_of_reflections
     return len(individual.intersections_on)
 
 
@@ -175,11 +169,7 @@ def evolution():
     # Rendering individuals in initial population as images
     for i in range(len(pop)):
         ax.draw(pop[i], i, config)
-
     print("Drawing finished")
-
-
-
     print("  Evaluated %i individuals" % len(pop))
 
 
@@ -208,7 +198,7 @@ def evolution():
                 co.mutate_angle(mutant)
                 mutant.fitness = 0
             if random.random() < mut_length_prob:
-                co.mutate_length(mutant)
+                co.mutate_length(mutant, config)
                 mutant.fitness = 0
 
         # Evaluate the individuals with an invalid fitness

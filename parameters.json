@@ -1,7 +1,7 @@
 {
     "lamp": {
         "height": 4000,
-        "number_of_rays": 18,
+        "number_of_rays": 20,
 	"ray_distribution": "uniform",
         "base_length": 200,
         "base_angle": 45,
@@ -17,13 +17,12 @@
 	"sections": 10
     },
     "evolution": {
-        "population_size": 8,
+        "population_size": 10,
         "number_of_generations": 10,
         "operators": {
             "mutation": {
                 "angle_mutation_prob": 0.7,
-                "length_mutation_prob": 0.05,
-                "base_mutation_prob": 0.8
+                "length_mutation_prob": 0.5
             },
             "xover_prob": 0.9
         }

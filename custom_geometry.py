@@ -10,6 +10,8 @@ class MyRay:
     def __init__(self, origin, ray_angle, base_angle):
         # Intensity is calculated according to Lambertian distribution
         self.intensity = abs(math.sin(math.radians(abs(ray_angle-base_angle))))
+        self.ray_length = 1
+        self.end_intensity = self.intensity * 1/(self.ray_length*self.ray_length)
         # End coordinates are calculated from ray angle
         x_coordinate = 10000 * math.cos(math.radians(ray_angle)) + origin.x
         y_coordinate = 10000 * math.sin(math.radians(ray_angle)) + origin.y
@@ -18,10 +20,8 @@ class MyRay:
         # Array used for storing segments of reflected ray
         self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate))]
 
+
 def compute_reflection(ray, surface, intersection):
-    #print(ray)
-    #print((surface))
-    #print("intersection" + str(intersection))
     orig_point = ray.p1
     parallel = surface.parallel_line(orig_point)
     perpendicular = surface.perpendicular_line(intersection)
@@ -29,7 +29,6 @@ def compute_reflection(ray, surface, intersection):
     x_diff = (meet_point.x - orig_point.x)
     y_diff = (meet_point.y - orig_point.y)
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
-    #print(intersection, new_point)
     reflected_ray = Ray(intersection, new_point)
     return reflected_ray
 
