@@ -4,6 +4,9 @@ import copy as cp
 import math
 import sys
 
+import custom_operators as co
+import auxiliary as ax
+
 from deap import base
 from deap import creator
 from deap import tools
@@ -88,88 +91,6 @@ class Individual:
             ray_array.append(new_ray)
         return ray_array
 
-    def draw(self, name):
-        svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
-        # Generating drawing in SVG format
-        with open(svg_name, "w") as f:
-            x_offset = 1000
-            if (config.road.start < 0):
-                x_offset += abs(config.road.start)
-            y_offset = 1000
-            f.write('<svg width="{0}" height="{1}">'.format(config.road.end + x_offset + 1000, abs(config.road.depth) + 2000))
-            f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(config.road.end + x_offset + 1000, abs(config.road.depth) + 2000))
-            # f.write('<rect x="950" y="950" width="100" height="4070" fill="gray"/>') #stožár
-            # f.write('<rect x="100" y="950" width="900" height="70" fill="gray"/>') # výložník + lampa
-
-            for ray in []:
-                r = ray.ray
-                alpha = str(round(ray.intensity, 3))
-                color = "(250, 216, 22)"
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                    .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                            float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
-
-            for ray in self.original_rays:
-                array = ray.ray_array
-                alpha = str(round(ray.intensity, 3))
-                color = "(250, 216, 22)"
-                for r in array[:-1]:
-                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                    .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                            float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
-                r = array[-1]
-                intersection = self.road.intersection(r)
-                if intersection:
-                    intersection = intersection[0]
-                    f.write(
-                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                float(intersection.x) + x_offset, - float(intersection.y) + y_offset,
-                                color, alpha))
-                else:
-                    x_diff = float(r.points[1].x - r.points[0].x) * 50
-                    y_diff = float(r.points[1].y - r.points[0].y) * 50
-                    f.write(
-                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                        '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                    float(r.points[0].x) + x_offset + x_diff,
-                                    -float(r.points[0].y) + y_offset - y_diff,
-                                    color, alpha))
-
-
-            f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
-                    .format(self.road.p1.x + x_offset, -self.road.p1.y + y_offset,
-                            (self.road.p2.x-self.road.p1.x)))  # road
-
-            left_border = self.start
-            segments_size = self.road_length / config.road.sections
-
-            for segment in range(config.road.sections):
-                alpha = str(round(self.segments_intensity[segment], 3))
-                color = "(250, 6, 22)"
-
-                f.write('<rect x="{0}" y="{1}" width="{2}" height="50" style="fill:rgb{3};fill-opacity:{4};"/>'
-                        .format(left_border + x_offset, -self.road.p1.y + y_offset,
-                                (segments_size), color, alpha ))
-                left_border += segments_size
-
-            # Base
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
-                self.base.p1.x + x_offset, -self.base.p1.y + y_offset,
-                self.base.p2.x + x_offset, -self.base.p2.y + y_offset))
-
-            #pravá laple
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
-                self.base.p2.x + x_offset, -self.base.p2.y + y_offset,
-                float(self.right_segment.p2.x) + x_offset, float(-self.right_segment.p2.y) + y_offset))
-
-            # levá laple
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
-                self.base.p1.x + x_offset, -self.base.p1.y + y_offset,
-                float(self.left_segment.p2.x) + x_offset, float(-self.left_segment.p2.y) + y_offset))
-
-            f.write('</svg>')
-
     # Computing coordinates for right segment based on right angle and base info
     def compute_right_segment(self):
         base_right_p = self.base.points[1]
@@ -207,9 +128,6 @@ class Individual:
 
 
 def compute_reflection(ray, surface, intersection):
-    if ray.p1 == intersection:
-        print("same")
-        return []
     #print(ray)
     #print((surface))
     #print("intersection" + str(intersection))
@@ -240,31 +158,6 @@ def compute_intersections(ind):
     ind.intersections_on_intensity = intensity_sum
 
 
-def print_ray(ray):
-    x1 = round(float(ray.p1.x),2)
-    y1 = round(float(ray.p1.y),2)
-    x2 = round(float(ray.p2.x),2)
-    y2 = round(float(ray.p2.y),2)
-    print("Ray ", "X: ", x1,"Y: ", y1, " - ", "X: ", x2,"Y: ", y2)
-
-
-def print_point(point):
-    x = round(float(point.x),2)
-    y = round(float(point.y),2)
-    print("X: ", x,"Y: ", y)
-
-
-
-def print_point_array(points):
-    outcome = "[ "
-    for point in points:
-        x = str(round(float(point.x),2))
-        y = str(round(float(point.y),2))
-        outcome += "(" + x + ", " + y + "), "
-    outcome += "]"
-    print(outcome)
-
-
 def compute_reflections_two_segments(ind):
     ind.compute_right_segment()
     ind.compute_left_segment()
@@ -284,8 +177,8 @@ def compute_reflections_two_segments(ind):
             #print("right ", len(intersection_r))
 
             if intersection_r and intersection_r[0] != previous_i_r:
-                #print_ray(last_ray)
-                #print_point(intersection_r[0])
+                #ax.print_ray(last_ray)
+                #ax.print_point(intersection_r[0])
                 previous_i_r = intersection_r[0]
                 intersection = intersection_r[0]
                 reflected_ray = compute_reflection(last_ray, ind.right_segment, intersection)
@@ -299,8 +192,8 @@ def compute_reflections_two_segments(ind):
             intersection_l = last_ray.intersection(ind.left_segment)
             #print("left ", len(intersection_l))
             if intersection_l and intersection_l[0] != previous_i_l:
-                #print_ray(last_ray)
-                #print_point(intersection_l[0])
+                #ax.print_ray(last_ray)
+                #ax.print_point(intersection_l[0])
                 previous_i_l = intersection_l[0]
                 intersection = intersection_l[0]
                 reflected_ray = compute_reflection(last_ray, ind.left_segment, intersection)
@@ -311,63 +204,6 @@ def compute_reflections_two_segments(ind):
                 ray.ray_array = new_ray_array
                 continue_right = True
     ind.no_of_reflections = no_of_reflections
-
-
-def compute_reflections_multiple_segments(ind):
-    segments = ind.all_segments
-    timeout = 4
-    iteration = 0
-    for ray in ind.original_rays:
-        array = [ray]
-        while reflection_exists and iteration < timeout:
-            iteration += 1
-            reflection_exists = False
-            min_positive_length = float('inf')
-            suitable_segment = segments[0]
-            for segment in segments:
-                intersection = compute_intersection(ray, segment)
-                if intersection_exists:
-                    reflection_exists = True
-                    segment_length = length_of_segment(start, intersection)
-                    if (0 < segment_length < min_positive_length):
-                        min_positive_length = segment_length
-                        suitable_segment = segment
-                else:
-                    segment_length = 0
-            reflected_ray = compute_reflection(ray, segment, intersection)
-            
-            modified_ = [Ray(ray.p1, intersection), reflected_ray]
-
-
-def mutate_angle(individual):
-    individual.right_angle += random.randint(-5, 5)
-    individual.right_angle = max(individual.angle_limit_min, individual.right_angle)
-    individual.right_angle = min(individual.angle_limit_max, individual.right_angle)
- #   individual.left_angle += random.randint(-5,5)
- #   individual.left_angle = max(individual.angle_l_1, individual.left_angle)
- #   individual.left_angle = min(individual.angle_l_2, individual.left_angle)
-    return individual
-
-
-def mutate_length(individual):
-    individual.left_length_coef += random.random() / 2
-    individual.right_length_coef += random.random() / 2
-    individual.left_length_coef = min(individual.left_length_coef, individual.length_limit_max)
-    individual.right_length_coef = min(individual.right_length_coef, individual.length_limit_max)
-    individual.left_length_coef = max(individual.left_length_coef, individual.length_limit_min)
-    individual.right_length_coef = max(individual.right_length_coef, individual.length_limit_min)
-
-    return individual
-
-
-def mate(ind1, ind2):
-    dummy_angle = ind1.right_angle
-    ind1.right_angle = ind2.right_angle
-    ind2.right_angle = dummy_angle
-    dummy_length = ind1.right_length_coef
-    ind1.right_length_coef = ind2.right_length_coef
-    ind2.right_length_coef = dummy_length
-    return ind1, ind2
 
 
 def prepare_intersections(points):
@@ -381,7 +217,7 @@ def compute_road_segments(ind):
     segments_size = ind.road_length / config.road.sections
     segments_intensity = [0] * config.road.sections
     intersections = prepare_intersections(ind.intersections_on)
-    print(intersections)
+    #print(intersections)
     left_border = ind.start
     right_border = ind.start
     counter = 0
@@ -400,11 +236,8 @@ def compute_road_segments(ind):
         segments_intensity_proportional[segment] = segments_intensity[segment] / len(intersections)
     ind.segments_intensity = segments_intensity_proportional
 
-    print(segments_intensity)
-    print(segments_intensity_proportional)
-
-
-
+    #print(segments_intensity)
+    #print(segments_intensity_proportional)
 
 
 def evaluate_simple(individual):
@@ -416,36 +249,6 @@ def evaluate_simple(individual):
     #print(individual.intersections_on)
     compute_road_segments(individual)
     return len(individual.intersections_on)
-
-
-def evaluate(individual):
-    individual.fitness = individual.right_angle
-    all_intersections, un = compute_reflections(individual)
-    start = individual.start
-    end = individual.end
-    intersections_x = []
-    for i in all_intersections:
-        intersections_x.append(float(i.x))
-    #intersections_x.append(end)
-    intersections = sorted(intersections_x)
-
-    section_length = (end-start)/(len(intersections)+1)
-    no_sections = len(intersections)+1
-    parts = len(individual.rays)
-    part_length = (end-start) / parts
-    fitness = 0
-    for p in range(parts):
-        counter = 0
-        for i in intersections:
-            if i > start + p*part_length and i <= start + (p+1)*part_length:
-                counter += 1
-        fitness += abs(counter - 1)
-
-    #fitness = len(all_intersections)
-    #fitness = un
-    individual.fitness = (-fitness, un)
-    fitness_together = (-fitness + len(all_intersections))
-    return fitness_together
 
 
 def evolution():
@@ -467,7 +270,6 @@ def evolution():
     xover_prob = config.evolution.operators.xover_prob
     mut_angle_prob = config.evolution.operators.mutation.angle_mutation_prob
     mut_length_prob = config.evolution.operators.mutation.length_mutation_prob
-    mut_base_prob = config.evolution.operators.mutation.base_mutation_prob
 
     # Initiating elitism
     #hof = HallOfFame(1)
@@ -479,8 +281,7 @@ def evolution():
 
     # Rendering individuals in initial population as images
     for i in range(len(pop)):
-        pop[i].draw(i)
-        #print(pop[i].right_angle)
+        ax.draw(pop[i], i, config)
 
     print("Drawing finished")
 
@@ -489,17 +290,10 @@ def evolution():
     print("  Evaluated %i individuals" % len(pop))
 
 
-    # Extracting all the fitnesses of
-    fits = [ind.fitness for ind in pop]
-
-    # Variable keeping track of the number of generations
-    g = 0
-    line = str(mut_angle_prob) + " " + str(mut_length_prob)
-
     # Begin the evolution
-    while g < config.evolution.number_of_generations:
+    for g in range(config.evolution.number_of_generations):
         # A new generation
-        g = g + 1
+
         print("-- Generation %i --" % g)
 
         # Select the next generation individuals
@@ -511,27 +305,22 @@ def evolution():
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
 
             # cross two individuals with probability xover_prob
-            if random.random() < 0:
-                mate(child1, child2)
-
-                # fitness values of the children
-                # must be recalculated later
+            if random.random() < xover_prob:
+                co.mate(child1, child2)
+                # fitness values of the children must be recalculated later
                 child1.fitness = 0
                 child2.fitness = 0
 
         for mutant in offspring:
 
-            # mutate an individual with probability mut_angle_prob
-            if random.random() < 0.3:
-                mutate_angle(mutant)
-                #print("angle")
+            # mutate an individual with probability mut_angle_prob and mut_length_prob
+            if random.random() < mut_angle_prob:
+                co.mutate_angle(mutant)
                 mutant.fitness = 0
 
-            if random.random() < 0.3:
-                mutate_length(mutant)
-                #print("length")
+            if random.random() < mut_length_prob:
+                co.mutate_length(mutant)
                 mutant.fitness = 0
-
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if ind.fitness == 0]
@@ -542,39 +331,25 @@ def evolution():
         print("  Evaluated %i individuals" % len(invalid_ind))
         # The population is entirely replaced by the offspring
         pop[:] = offspring
-        #hof.update(pop)
+        # hof.update(pop)
 
-        #hof.update(pop)
-        # Gather all the fitnesses in one list and print the stats
-        fits = [ind.fitness for ind in pop]
-        #print(fits)
-        rang = [ind.right_angle for ind in pop]
-        #print(rang)
+        # hof.update(pop)
 
         best_ind = tools.selBest(pop, 1)[0]
-        #best_ind = hof[0]
+        # best_ind = hof[0]
 
         print("Best individual is %s, %s, %s, %s, %s, %s, %s" % (best_ind.left_length_coef, best_ind.left_angle,
                                                          best_ind.intersections_on_intensity, best_ind.fitness, ind.no_of_reflections,
                                                          best_ind.right_angle, best_ind.right_length_coef))
-        line = line + ", " + str(best_ind.fitness)
-        best_ind.draw("best"+str(g))
+        ax.draw(best_ind,"best"+str(g), config)
 
     print("-- End of (successful) evolution --")
-    line = line + "\n"
-    stat_name = "stats/prob"
-    with open(stat_name, "a") as f:
-        f.write(line)
 
     best_ind = tools.selBest(pop, 1)[0]
     print("--")
-    #print(best_ind.reflected)
+
 
     print("Best individual is %s" % (best_ind.fitness))
-
- #   for j in range(len(hof)):
- #       hof[j].draw(j)
-
 
 
 # create config parser
@@ -584,11 +359,8 @@ builder = ConfigBuilder()
 config = builder.parse_config('parameters.json')
 
 
-
 def main():
-    # Example - angle mutation probability
-    #print(config.evolution.operators.mutation.angle_mutation_prob)
-    # Run evolution algorithm with given configuration
+    # Run evolution algorithm
     evolution()
 
 
