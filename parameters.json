@@ -1,0 +1,32 @@
+{
+    "lamp": {
+        "height": 4000,
+        "number_of_rays": 18,
+	"ray_distribution": "uniform",
+        "base_length": 200,
+        "base_angle": 45,
+        "angle_lower_bound": 90,
+        "angle_upper_bound": 180,
+        "length_lower_bound": 1,
+        "length_upper_bound": 3
+        },
+    "road": {
+        "start": 4000,
+        "end": 10000, 
+	"depth": -8000,
+	"sections": 10
+    },
+    "evolution": {
+        "population_size": 8,
+        "number_of_generations": 10,
+        "operators": {
+            "mutation": {
+                "angle_mutation_prob": 0.7,
+                "length_mutation_prob": 0.05,
+                "base_mutation_prob": 0.8
+            },
+            "xover_prob": 0.9
+        }
+    }
+}
+
