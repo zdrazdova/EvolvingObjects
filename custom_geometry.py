@@ -1,13 +1,12 @@
 import math
 
-
 from sympy.geometry import Line, Ray, Point, Segment
 from sympy import pi, sin, cos
 
 
 class MyRay:
 
-    def __init__(self, origin, ray_angle, base_angle):
+    def __init__(self, origin: Point, ray_angle: int, base_angle: int):
         # Intensity is calculated according to Lambertian distribution
         self.intensity = abs(math.sin(math.radians(abs(ray_angle-base_angle))))
         self.ray_length = 1
@@ -21,7 +20,7 @@ class MyRay:
         self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate))]
 
 
-def compute_reflection(ray, surface, intersection):
+def compute_reflection(ray: Ray, surface: Segment, intersection: Point) -> Ray:
     orig_point = ray.p1
     parallel = surface.parallel_line(orig_point)
     perpendicular = surface.perpendicular_line(intersection)
@@ -34,11 +33,11 @@ def compute_reflection(ray, surface, intersection):
 
 
 # computes intersections of rays from LED and road below the lamp
-def compute_intersections(ind):
+def compute_intersections(ind, env):
     inter_array = []
     intensity_sum = 0
     for ray in ind.original_rays:
-        inter_point = ind.road.intersection(ray.ray_array[-1])
+        inter_point = env.road.intersection(ray.ray_array[-1])
         if inter_point != []:
             intensity_sum += ray.intensity
             inter_array.append(inter_point[0].x)
@@ -96,7 +95,7 @@ def compute_reflections_two_segments(ind):
     ind.no_of_reflections = no_of_reflections
 
 
-def prepare_intersections(points):
+def prepare_intersections(points: [int]):
     x_coordinates = []
     for point in points:
         x_coordinates.append(float(point))

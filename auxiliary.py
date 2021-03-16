@@ -1,4 +1,8 @@
-def print_ray(ray):
+from sympy.geometry import Line, Ray, Point, Segment
+
+from custom_classes import Environment, Component
+
+def print_ray(ray: Ray):
     x1 = round(float(ray.p1.x),2)
     y1 = round(float(ray.p1.y),2)
     x2 = round(float(ray.p2.x),2)
@@ -6,13 +10,13 @@ def print_ray(ray):
     print("Ray ", "X: ", x1,"Y: ", y1, " - ", "X: ", x2,"Y: ", y2)
 
 
-def print_point(point):
+def print_point(point: Point):
     x = round(float(point.x),2)
     y = round(float(point.y),2)
     print("X: ", x,"Y: ", y)
 
 
-def print_point_array(points):
+def print_point_array(points: [Point]):
     outcome = "[ "
     for point in points:
         x = str(round(float(point.x),2))
@@ -22,18 +26,18 @@ def print_point_array(points):
     print(outcome)
 
 
-def draw(ind, name, config):
+def draw(ind: Component, name: str, env: Environment):
     svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
     # Generating drawing in SVG format
     with open(svg_name, "w") as f:
         x_offset = 1000
-        if (config.road.start < 0):
-            x_offset += abs(config.road.start)
+        if (env.road_start < 0):
+            x_offset += abs(env.road_start)
         y_offset = 1000
         f.write(
-            '<svg width="{0}" height="{1}">'.format(config.road.end + x_offset + 1000, abs(config.road.depth) + 2000))
-        f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(config.road.end + x_offset + 1000,
-                                                                       abs(config.road.depth) + 2000))
+            '<svg width="{0}" height="{1}">'.format(env.road_end + x_offset + 1000, abs(env.road_depth) + 2000))
+        f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(env.road_end + x_offset + 1000,
+                                                                       abs(env.road_depth) + 2000))
         # f.write('<rect x="950" y="950" width="100" height="4070" fill="gray"/>') #stožár
         # f.write('<rect x="100" y="950" width="900" height="70" fill="gray"/>') # výložník + lampa
 
@@ -56,7 +60,7 @@ def draw(ind, name, config):
                     .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                             float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
             r = array[-1]
-            intersection = ind.road.intersection(r)
+            intersection = env.road.intersection(r)
             if intersection:
                 intersection = intersection[0]
                 f.write(
@@ -75,18 +79,18 @@ def draw(ind, name, config):
                                 color, alpha))
 
         f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
-                .format(ind.road.p1.x + x_offset, -ind.road.p1.y + y_offset,
-                        (ind.road.p2.x - ind.road.p1.x)))  # road
+                .format(env.road.p1.x + x_offset, -env.road.p1.y + y_offset,
+                        (env.road.p2.x - env.road.p1.x)))  # road
 
-        left_border = ind.start
-        segments_size = ind.road_length / config.road.sections
+        left_border = env.road_start
+        segments_size = env.road_length / env.road_sections
 
-        for segment in range(config.road.sections):
+        for segment in range(env.road_sections):
             alpha = str(round(ind.segments_intensity[segment], 3))
             color = "(250, 6, 22)"
 
             f.write('<rect x="{0}" y="{1}" width="{2}" height="50" style="fill:rgb{3};fill-opacity:{4};"/>'
-                    .format(left_border + x_offset, -ind.road.p1.y + y_offset,
+                    .format(left_border + x_offset, -env.road.p1.y + y_offset,
                             (segments_size), color, alpha))
             left_border += segments_size
 
