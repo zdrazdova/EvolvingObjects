@@ -45,7 +45,7 @@ def evaluate(individual: cc.Component, env: cc.Environment):
     compute_road_segments(individual, env)
     efficienty = len(individual.intersections_on)
     no_reflections = individual.no_of_reflections
-    return len(individual.intersections_on)
+    return individual.intersections_on_intensity
 
 
 def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, angle_lower_bound: int, angle_upper_bound: int,
@@ -65,27 +65,27 @@ def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, a
     # Initiating first population
     pop = toolbox.population(n=population_size)
 
-
-    # Initiating elitism
-    hof = HallOfFame(1)
+    # Evaluating fitness
     fitnesses = []
     for item in pop:
         fitnesses.append(evaluate(item, env))
     for ind, fit in zip(pop, fitnesses):
         ind.fitness = fit
-    print("Start of evolution")
 
     # Rendering individuals in initial population as images
     for i in range(len(pop)):
         ax.draw(pop[i], i, env)
-    print("Drawing finished")
-    print("  Evaluated %i individuals" % len(pop))
+    print("Drawing initial population finished")
 
+    # Initiating elitism
+    hof = HallOfFame(1)
+
+    print("Start of evolution")
 
     # Begin the evolution
     for g in range(number_of_generations):
         # A new generation
-        print("-- Generation %i --" % g)
+        print(f"-- Generation {g} --")
 
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
@@ -118,7 +118,7 @@ def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, a
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness = fit
 
-        print("  Evaluated %i individuals" % len(invalid_ind))
+        print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
         pop[:] = offspring
         hof.update(pop)
@@ -126,10 +126,8 @@ def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, a
         best_ind = tools.selBest(pop, 1)[0]
         best_ind = hof[0]
 
-        print("Best individual is %s, %s, %s, %s, %s, %s, %s" % (best_ind.left_length_coef, best_ind.left_angle,
-                                                         best_ind.intersections_on_intensity, best_ind.fitness, ind.no_of_reflections,
-                                                         best_ind.right_angle, best_ind.right_length_coef))
-        ax.draw(best_ind,"best"+str(g), env)
+        print(f"Best individual has fitness: {best_ind.fitness}, number of reflections is {best_ind.no_of_reflections}")
+        ax.draw(best_ind,f"best {g}", env)
 
     print("-- End of (successful) evolution --")
     print("--")
@@ -140,10 +138,10 @@ if __name__ == "__main__":
 
     # create config parser
     builder = ConfigBuilder()
-
     # parse configuration from file parameters.json
     config = builder.parse_config('parameters.json')
 
+    # Load parameters for environment
     base_length = config.lamp.base_length
     base_slope = config.lamp.base_angle
     road_start = config.road.start
@@ -154,10 +152,11 @@ if __name__ == "__main__":
     # Init environment
     env = cc.Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections)
 
-    # Run evolution algorithm
+    # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays
     ray_distribution = config.lamp.ray_distribution
 
+    # Load limits for reflective surfaces
     angle_lower_bound = config.lamp.angle_lower_bound
     angle_upper_bound = config.lamp.angle_upper_bound
     length_lower_bound = config.lamp.length_lower_bound
@@ -166,11 +165,13 @@ if __name__ == "__main__":
     population_size = config.evolution.population_size
     number_of_generations = config.evolution.number_of_generations
 
-
+    # Load parameters for evolution
     operators = config.evolution.operators
     angle_mut_prob = operators.mutation.angle_mutation_prob
     length_mut_prob = operators.mutation.length_mutation_prob
     xover_prob = operators.xover_prob
+
+    # Run evolution algorithm
     evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
               length_lower_bound, length_upper_bound, population_size, number_of_generations,
               angle_mut_prob, length_mut_prob, xover_prob)

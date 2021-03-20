@@ -4,6 +4,7 @@ from sympy.geometry import Line, Ray, Point, Segment
 from sympy import pi, sin, cos
 
 
+
 class MyRay:
 
     def __init__(self, origin: Point, ray_angle: int, base_angle: int):

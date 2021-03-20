@@ -22,7 +22,7 @@ def mutate_angle(individual:Component) -> Component:
     return individual
 
 
-def mate(ind1:Component, ind2:Component) -> Component:
+def mate(ind1:Component, ind2:Component) -> (Component, Component):
     dummy_angle = ind1.right_angle
     ind1.right_angle = ind2.right_angle
     ind2.right_angle = dummy_angle

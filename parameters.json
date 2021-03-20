@@ -16,14 +16,14 @@
 	"sections": 10
     },
     "evolution": {
-        "population_size": 20,
-        "number_of_generations": 2,
+        "population_size": 10,
+        "number_of_generations": 20,
         "operators": {
             "mutation": {
-                "angle_mutation_prob": 0.7,
-                "length_mutation_prob": 0.5
+                "angle_mutation_prob": 0.4,
+                "length_mutation_prob": 0.4
             },
-            "xover_prob": 0.9
+            "xover_prob": 0
         }
     }
 }
