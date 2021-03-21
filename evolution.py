@@ -1,10 +1,11 @@
 import random
 import math
 
+import auxiliary as ax
 import custom_classes as cc
 import custom_geometry as cg
 import custom_operators as co
-import auxiliary as ax
+import quality_assesment as qa
 
 from deap import base
 from deap import creator
@@ -28,24 +29,24 @@ def compute_road_segments(ind: cc.Component, env: cc.Environment):
         stay = True
         while stay and counter < len(intersections):
             stay = False
-            if left_border <= intersections[counter] < right_border:
-                segments_intensity[segment] += 1
+            if left_border <= intersections[counter][0] < right_border:
+                segments_intensity[segment] += intersections[counter][1]
                 counter += 1
                 stay = True
+    ind.segments_intensity = segments_intensity
     segments_intensity_proportional = [0] * env.road_sections
     max_intensity = max(segments_intensity)
     for segment in range(env.road_sections):
         segments_intensity_proportional[segment] = segments_intensity[segment] / max_intensity
-    ind.segments_intensity = segments_intensity_proportional
+    ind.segments_intensity_proportional = segments_intensity_proportional
 
 
 def evaluate(individual: cc.Component, env: cc.Environment):
     cg.compute_reflections_two_segments(individual)
     cg.compute_intersections(individual, env)
+    cg.prepare_intersections(individual.intersections_on)
     compute_road_segments(individual, env)
-    efficienty = len(individual.intersections_on)
-    no_reflections = individual.no_of_reflections
-    return individual.intersections_on_intensity
+    return qa.glare_reduction(individual)
 
 
 def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, angle_lower_bound: int, angle_upper_bound: int,
@@ -127,7 +128,7 @@ def evolution(env: cc.Environment, number_of_rays: int, ray_distribution: str, a
         best_ind = hof[0]
 
         print(f"Best individual has fitness: {best_ind.fitness}, number of reflections is {best_ind.no_of_reflections}")
-        ax.draw(best_ind,f"best {g}", env)
+        ax.draw(best_ind,f"best{g}", env)
 
     print("-- End of (successful) evolution --")
     print("--")

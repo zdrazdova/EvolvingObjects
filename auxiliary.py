@@ -95,17 +95,17 @@ def draw(ind: Component, name: str, env: Environment):
             left_border += segments_size
 
         # Base
-        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
+        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
             ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
             ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset))
 
         # pravá laple
-        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
+        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
             ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset,
             float(ind.right_segment.p2.x) + x_offset, float(-ind.right_segment.p2.y) + y_offset))
 
         # levá laple
-        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:40"/>'.format(
+        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
             ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
             float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
 

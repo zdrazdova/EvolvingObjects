@@ -13,11 +13,11 @@
         "start": 4000,
         "end": 10000, 
 	"depth": -8000,
-	"sections": 10
+	"sections": 6
     },
     "evolution": {
         "population_size": 10,
-        "number_of_generations": 20,
+        "number_of_generations": 40,
         "operators": {
             "mutation": {
                 "angle_mutation_prob": 0.4,

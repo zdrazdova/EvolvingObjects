@@ -3,14 +3,15 @@ import math
 from sympy.geometry import Line, Ray, Point, Segment
 from sympy import pi, sin, cos
 
+import custom_classes as cc
 
 
 class MyRay:
 
     def __init__(self, origin: Point, ray_angle: int, base_angle: int):
+        self.ray_length = 1
         # Intensity is calculated according to Lambertian distribution
         self.intensity = abs(math.sin(math.radians(abs(ray_angle-base_angle))))
-        self.ray_length = 1
         self.end_intensity = self.intensity * 1/(self.ray_length*self.ray_length)
         # End coordinates are calculated from ray angle
         x_coordinate = 10000 * math.cos(math.radians(ray_angle)) + origin.x
@@ -19,6 +20,7 @@ class MyRay:
         self.ray = Ray(origin, Point(x_coordinate, y_coordinate))
         # Array used for storing segments of reflected ray
         self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate))]
+        self.road_intersection = []
 
 
 def compute_reflection(ray: Ray, surface: Segment, intersection: Point) -> Ray:
@@ -41,7 +43,8 @@ def compute_intersections(ind, env):
         inter_point = env.road.intersection(ray.ray_array[-1])
         if inter_point != []:
             intensity_sum += ray.intensity
-            inter_array.append(inter_point[0].x)
+            inter_array.append([inter_point[0].x, ray.intensity])
+            ray.road_intersection = inter_point[0].x
     # print(len(ind.original_rays))
     # print(inter_array)
     ind.intersections_on = inter_array
@@ -96,8 +99,10 @@ def compute_reflections_two_segments(ind):
     ind.no_of_reflections = no_of_reflections
 
 
-def prepare_intersections(points: [int]):
+def prepare_intersections(points):
     x_coordinates = []
     for point in points:
-        x_coordinates.append(float(point))
+        x_coordinates.append([float(point[0]), point[1]])
     return sorted(x_coordinates)
+
+
