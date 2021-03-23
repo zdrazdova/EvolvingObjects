@@ -1,1 +1,5 @@
+.idea/*
 img/*
+png/*
+stats/*
+__pycache__/*

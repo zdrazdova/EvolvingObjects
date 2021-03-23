@@ -10,8 +10,8 @@
         "length_upper_bound": 3
         },
     "road": {
-        "start": 4000,
-        "end": 10000, 
+        "start": 0,
+        "end": 12000, 
 	"depth": -8000,
 	"sections": 6
     },
@@ -25,6 +25,12 @@
             },
             "xover_prob": 0
         }
+    },
+    "evaluation": {
+	"inverse_square_law": "no",
+	"cosine error": "no",
+        "criterion": "efficiency"
+	
     }
 }
 
