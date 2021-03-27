@@ -20,7 +20,7 @@ def evaluate(individual: Component, env: Environment):
     compute_reflections_two_segments(individual)
     if env.quality_criterion == "glare reduction":
         return glare_reduction(individual)
-    road_intersections = compute_intersections(individual.original_rays, env.road)
+    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
     if env.quality_criterion == "efficiency":
         return efficiency(road_intersections, individual.original_rays)
     if env.quality_criterion == "illuminance uniformity":
@@ -135,9 +135,10 @@ def main():
 
     # Load parameters for evaluation
     criterion = config.evaluation.criterion
+    cosine_error = config.evaluation.cosine_error
 
     # Init environment
-    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections, criterion)
+    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections, criterion, cosine_error)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays

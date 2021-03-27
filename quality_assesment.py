@@ -10,7 +10,7 @@ from quality_precalculations import intensity_of_intersections, sum_intensity
 def efficiency(road_intersections: List[Tuple[Rational, float]], all_rays: List[MyRay]) -> float:
     intensity_on_road = intensity_of_intersections(road_intersections)
     total_intensity = sum_intensity(all_rays)
-    return intensity_on_road/total_intensity
+    return intensity_on_road
 
 
 def illuminance_uniformity(individual: Component) -> float:

@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from sympy import Rational
+from sympy import Rational, sin
 from sympy.geometry import Ray, Point, Segment
 
 from custom_ray import MyRay
@@ -23,18 +23,17 @@ def compute_reflection(ray: Ray, surface: Segment) -> Ray:
 
 
 # computes intersections of rays from LED and road below the lamp
-def compute_intersections(rays: List[MyRay], road: Segment) -> List[Tuple[Rational, float]]:
-    cosine_error = False
+def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -> List[Tuple[Rational, float]]:
     inter_array = []
-    intensity_sum = 0
     for ray in rays:
         inter_point = road.intersection(ray.ray_array[-1])
         if inter_point:
-            if cosine_error:
-                intensity_sum += ray.intensity
-            else:
-                intensity_sum += ray.intensity
-            inter_array.append((inter_point[0].x, ray.intensity))
+            intensity = ray.intensity
+            if cosine_error == "Yes":
+                reduction = float(sin(ray.ray_array[-1].angle_between(road)))
+                intensity = ray.intensity*reduction
+                #print(ray.intensity, reduction, ray.intensity*reduction)
+            inter_array.append((inter_point[0].x, intensity, ))
             ray.road_intersection = inter_point[0].x
     return inter_array
 
