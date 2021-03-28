@@ -10,7 +10,7 @@ from custom_ray import MyRay
 def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -> List[Tuple[Rational, float]]:
     """
     Compute intersections of rays from LED and road below the lamp. Zip x coordinates of each intersection
-    with intensity of the ray. If cosine_error has value "Yes" multiply intensity by redustion caused by the angle
+    with intensity of the ray. If cosine_error has value "Yes" multiply intensity by reduction caused by the angle
     of incident ray and the road.
 
     :param rays: List of rays directed from LED
@@ -57,7 +57,60 @@ def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_
     return reflected_ray, ray_intensity
 
 
+def compute_reflection_segment(ray_array, segment, previous_intersection, ray_intensity, r_factor):
+    """
+    Compute reflection of last part of the ray from given segment. If there is an intersection of ray and segment,
+    compute reflected ray, update ray intensity, update ray array. If there is not, return False and original values.
+
+    :param ray_array: array representing parts of ray
+    :param segment: segment that the ray should reflect from
+    :param previous_intersection: previous intersection of given ray on this segment
+    :param ray_intensity: intensity of ray before reflection
+    :param r_factor: reflective factor
+    :return: True/False whether the ray was reflected, possibly updated ray array, previous intersection and intensity
+    """
+    last_ray = ray_array[-1]
+    intersection = last_ray.intersection(segment)
+    if intersection and intersection[0] != previous_intersection:
+        reflected_ray, ray_intensity = compute_reflection(last_ray, segment, ray_intensity, r_factor)
+        new_ray_array = ray_array[:-1]
+        new_ray_array.append(Ray(last_ray.p1, intersection[0]))
+        new_ray_array.append(reflected_ray)
+        ray_array = new_ray_array
+        return True, ray_array, intersection[0], ray_intensity
+    return False, ray_array, previous_intersection, ray_intensity
+
+
 def compute_reflections_two_segments(ind: Component, r_factor: float):
+    """
+
+    :param ind:
+    :param r_factor:
+    :return:
+    """
+    ind.compute_right_segment()
+    ind.compute_left_segment()
+    no_of_reflections = 0
+    for ray in ind.original_rays:
+        ray_intensity = ray.intensity
+        continue_left = True
+        continue_right = True
+        previous_i_r = Point(0, 0)
+        previous_i_l = Point(0, 0)
+        ray.ray_array = [ray.ray]
+        while continue_left or continue_right:
+            continue_left, ray.ray_array, previous_i_r, ray_intensity = \
+                compute_reflection_segment(ray.ray_array, ind.right_segment, previous_i_r, ray_intensity, r_factor)
+            if continue_left:
+                no_of_reflections += 1
+            continue_right, ray.ray_array, previous_i_l, ray_intensity = \
+                compute_reflection_segment(ray.ray_array, ind.left_segment, previous_i_l, ray_intensity, r_factor)
+            if continue_right:
+                no_of_reflections += 1
+    ind.no_of_reflections = no_of_reflections
+
+
+def compute_reflections_two_segments_unused(ind: Component, r_factor: float):
     ind.compute_right_segment()
     ind.compute_left_segment()
     no_of_reflections = 0
