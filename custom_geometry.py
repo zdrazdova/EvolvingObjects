@@ -32,7 +32,6 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
             if cosine_error == "Yes":
                 reduction = float(sin(ray.ray_array[-1].angle_between(road)))
                 intensity = ray.intensity*reduction
-                #print(ray.intensity, reduction, ray.intensity*reduction)
             inter_array.append((inter_point[0].x, intensity, ))
             ray.road_intersection = inter_point[0].x
     return inter_array
@@ -56,7 +55,6 @@ def compute_reflections_two_segments(ind):
 
             if intersection_r and intersection_r[0] != previous_i_r:
                 previous_i_r = intersection_r[0]
-                intersection = intersection_r[0]
                 reflected_ray = compute_reflection(last_ray, ind.right_segment)
                 no_of_reflections += 1
                 new_ray_array = ray.ray_array[:-1]
@@ -68,7 +66,6 @@ def compute_reflections_two_segments(ind):
             intersection_l = last_ray.intersection(ind.left_segment)
             if intersection_l and intersection_l[0] != previous_i_l:
                 previous_i_l = intersection_l[0]
-                intersection = intersection_l[0]
                 reflected_ray = compute_reflection(last_ray, ind.left_segment)
                 no_of_reflections += 1
                 new_ray_array = ray.ray_array[:-1]

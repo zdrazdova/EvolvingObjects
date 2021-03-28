@@ -2,27 +2,47 @@ from typing import List, Tuple
 
 from sympy import Rational
 
-from component import Component
 from custom_geometry import prepare_intersections
 from custom_ray import MyRay
-from environment import Environment
 
 
 def intensity_of_intersections(road_intersections: List[Tuple[Rational, float]]) -> float:
+    """
+    Compute sum of intensities of road intersections
+
+    :param road_intersections: List of tuples (x-coord of road intersection, intensity of incident ray)
+    :return: Sum of intensities of rays intersection the road
+    """
     return sum([y for x, y in road_intersections])
 
 
 def sum_intensity(rays: List[MyRay]) -> float:
+    """
+    Compute sum of intensity of all rays form LED
+
+    :param rays: All rays from LED
+    :return: Sum of intensity of all rays form the LED
+    """
     return sum([ray.intensity for ray in rays])
 
 
-def compute_road_segments(ind: Component, env: Environment):
-    segments_size = env.road_length / env.road_sections
-    segments_intensity = [0] * env.road_sections
-    intersections = prepare_intersections(ind.intersections_on)
-    right_border = env.road_start
+def compute_segments_intensity(intersections_on: List[Tuple[Rational, float]], road_sections: int, road_start: int,
+                               road_length: int) -> List[float]:
+    """
+    Compute sum of intensity of incidents rays for each segment
+
+    :param intersections_on: List of tuples (x-coord of road intersection, intensity of incident ray)
+    :param road_sections: Number of road sections
+    :param road_start: X coordinate of start of the road
+    :param road_length: Length of the road
+    :return: List of intensity of incident rays of each road segment
+    """
+    segments_size = road_length / road_sections
+    segments_intensity = [0] * road_sections
+    intersections = prepare_intersections(intersections_on)
+    right_border = road_start
     counter = 0
-    for segment in range(env.road_sections):
+    for segment in range(road_sections):
         left_border = right_border
         right_border += segments_size
         stay = True
@@ -32,9 +52,19 @@ def compute_road_segments(ind: Component, env: Environment):
                 segments_intensity[segment] += intersections[counter][1]
                 counter += 1
                 stay = True
-    ind.segments_intensity = segments_intensity
-    segments_intensity_proportional = [0] * env.road_sections
+    return segments_intensity
+
+
+def compute_proportional_intensity(segments_intensity: List[float], road_sections: int) -> List[float]:
+    """
+    Compute list of intensities for all segments proportional to maximum segment intensity
+
+    :param segments_intensity: List of intensity of rays intersecting the road segments
+    :param road_sections: number of sections of the road
+    :return: List of
+    """
+    segments_intensity_proportional = [0] * road_sections
     max_intensity = max(segments_intensity)
-    for segment in range(env.road_sections):
+    for segment in range(road_sections):
         segments_intensity_proportional[segment] = segments_intensity[segment] / max_intensity
-    ind.segments_intensity_proportional = segments_intensity_proportional
+    return segments_intensity_proportional

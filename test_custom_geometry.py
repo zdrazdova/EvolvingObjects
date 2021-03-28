@@ -20,12 +20,12 @@ def test_compute_reflection(ray: Ray, surface: Segment, expected: Ray):
     assert actual == expected
 
 
-
 @pytest.mark.parametrize(
     ['points', 'expected'],
-    [[[(Rational(10/3), 0.8), (3, 0.2), (Rational(29/7), 0)], [(3, 0.2), (float(10/3), 0.8), (float(29/7), 0)]],
-      [[], []],
-      [[(Rational(10/7), 0.8), (3, 0.2), (Rational(10/7), 0.555)], [(float(10/7), 0.555), (float(10/7), 0.8), (3, 0.2)]]
+    [[[(Rational(10 / 3), 0.8), (3, 0.2), (Rational(29 / 7), 0)], [(3, 0.2), (float(10 / 3), 0.8), (float(29 / 7), 0)]],
+     [[], []],
+     [[(Rational(10 / 7), 0.8), (3, 0.2), (Rational(10 / 7), 0.55)],
+      [(float(10 / 7), 0.55), (float(10 / 7), 0.8), (3, 0.2)]]
      ]
 )
 def test_prepare_intersections(points: List[Tuple[Rational, float]], expected: List[Tuple[float, float]]):

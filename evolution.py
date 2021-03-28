@@ -2,7 +2,7 @@ import random
 
 import auxiliary as ax
 import custom_operators as co
-from custom_geometry import prepare_intersections, compute_intersections, compute_reflections_two_segments
+from custom_geometry import compute_intersections, compute_reflections_two_segments
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity
 
 from deap import base
@@ -13,7 +13,7 @@ from python_json_config import ConfigBuilder
 
 from component import Component
 from environment import Environment
-from quality_precalculations import compute_road_segments, intensity_of_intersections
+from quality_precalculations import compute_segments_intensity, compute_proportional_intensity
 
 
 def evaluate(individual: Component, env: Environment):
@@ -24,8 +24,9 @@ def evaluate(individual: Component, env: Environment):
     if env.quality_criterion == "efficiency":
         return efficiency(road_intersections, individual.original_rays)
     if env.quality_criterion == "illuminance uniformity":
-        compute_road_segments(individual, env)
-        return illuminance_uniformity(individual)
+        segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
+        individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity, env.road_sections)
+        return illuminance_uniformity(segments_intensity)
     return efficiency(individual)
 
 
@@ -37,8 +38,9 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
     creator.create("Fitness", base.Fitness, weights=(1.0,))
     creator.create("Individual", Component, fitness=creator.Fitness)
     toolbox = base.Toolbox()
-    toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays, ray_distribution=ray_distribution,
-                     angle_lower_bound=angle_lower_bound, angle_upper_bound=angle_upper_bound, length_lower_bound=length_lower_bound,
+    toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays,
+                     ray_distribution=ray_distribution, angle_lower_bound=angle_lower_bound,
+                     angle_upper_bound=angle_upper_bound, length_lower_bound=length_lower_bound,
                      length_upper_bound=length_upper_bound)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("select", tools.selTournament, tournsize=2)

@@ -88,7 +88,7 @@ def draw(ind: Component, name: str, env: Environment):
             segments_size = env.road_length / env.road_sections
 
             for segment in range(env.road_sections):
-                alpha = str(round(ind.segments_intensity[segment], 3))
+                alpha = str(round(ind.segments_intensity_proportional[segment], 3))
                 color = "(250, 6, 22)"
                 f.write('<rect x="{0}" y="{1}" width="{2}" height="50" style="fill:rgb{3};fill-opacity:{4};"/>'
                         .format(left_border + x_offset, -env.road.p1.y + y_offset,
