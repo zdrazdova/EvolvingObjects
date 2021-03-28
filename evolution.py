@@ -17,7 +17,7 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 
 
 def evaluate(individual: Component, env: Environment):
-    compute_reflections_two_segments(individual)
+    compute_reflections_two_segments(individual, env.reflective_factor)
     if env.quality_criterion == "glare reduction":
         return glare_reduction(individual)
     road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
@@ -25,7 +25,7 @@ def evaluate(individual: Component, env: Environment):
         return efficiency(road_intersections, individual.original_rays)
     if env.quality_criterion == "illuminance uniformity":
         segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
-        individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity, env.road_sections)
+        individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
         return illuminance_uniformity(segments_intensity)
     return efficiency(individual)
 
@@ -138,9 +138,11 @@ def main():
     # Load parameters for evaluation
     criterion = config.evaluation.criterion
     cosine_error = config.evaluation.cosine_error
+    reflective_factor = config.evaluation.reflective_factor
 
     # Init environment
-    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections, criterion, cosine_error)
+    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
+                      criterion, cosine_error, reflective_factor)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays

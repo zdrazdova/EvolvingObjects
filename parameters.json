@@ -10,8 +10,8 @@
         "length_upper_bound": 3
         },
     "road": {
-        "start": 8,
-        "end": 12000, 
+        "start": -4000,
+        "end": 16000, 
 	"depth": -8000,
 	"sections": 4
     },
@@ -27,9 +27,10 @@
         }
     },
     "evaluation": {
+	"reflective_factor" : 0.98,
 	"inverse_square_law": "No",
 	"cosine_error": "Yes",
-        "criterion": "illuminance uniformity"
+        "criterion": "glare reduction"
 	
     }
 }

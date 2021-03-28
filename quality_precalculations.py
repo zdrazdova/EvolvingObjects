@@ -55,7 +55,7 @@ def compute_segments_intensity(intersections_on: List[Tuple[Rational, float]], r
     return segments_intensity
 
 
-def compute_proportional_intensity(segments_intensity: List[float], road_sections: int) -> List[float]:
+def compute_proportional_intensity(segments_intensity: List[float]) -> List[float]:
     """
     Compute list of intensities for all segments proportional to maximum segment intensity
 
@@ -63,8 +63,11 @@ def compute_proportional_intensity(segments_intensity: List[float], road_section
     :param road_sections: number of sections of the road
     :return: List of
     """
+    road_sections = len(segments_intensity)
     segments_intensity_proportional = [0] * road_sections
     max_intensity = max(segments_intensity)
+    if max_intensity == 0:
+        return segments_intensity_proportional
     for segment in range(road_sections):
         segments_intensity_proportional[segment] = segments_intensity[segment] / max_intensity
     return segments_intensity_proportional
