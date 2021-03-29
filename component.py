@@ -1,4 +1,5 @@
 import random
+from typing import List
 
 from sympy.geometry import Ray, Point, Segment
 from sympy import pi, sin, cos
@@ -39,8 +40,15 @@ class Component:
         self.no_of_reflections = 0
         self.segments_intensity = []
 
-    # Sampling given number of rays, base angle is used for intensity calculations
-    def sample_rays(self, number_of_rays: int, distribution: str, base_angle: int):
+    def sample_rays(self, number_of_rays: int, distribution: str, base_angle: int) -> List[MyRay]:
+        """
+        Sample given number of rays from LED according to base angle and distribution parameter.
+
+        :param number_of_rays: Number of rays going from LED
+        :param distribution: random vs uniform distribution - random is default
+        :param base_angle: Angle of base for LED
+        :return: List of rays from LED
+        """
         ray_array = []
         if distribution == "uniform":
             step = 180 / number_of_rays
@@ -53,8 +61,11 @@ class Component:
             ray_array.append(new_ray)
         return ray_array
 
-    # Computing coordinates for right segment based on right angle and base info
     def compute_right_segment(self):
+        """
+        Computing coordinates for right segment based on right angle and base info
+        :return:
+        """
         base_right_p = self.base.points[1]
         right_ray = Ray(base_right_p, angle=self.right_angle/180 * pi)
         x_diff = self.base.length * self.right_length_coef * cos(self.right_angle/180 * pi)
@@ -70,8 +81,10 @@ class Component:
 
         self.right_segment = Segment(base_right_p, Point(float(right_end_x), float(right_end_y)))
 
-    # Computing coordinates for left segment based on left angle and base info
     def compute_left_segment(self):
+        """
+        Computing coordinates for left segment based on left angle and base info
+        """
         base_left_p = self.base.points[0]
         left_ray = Ray(base_left_p, angle=self.left_angle/180 * pi)
         x_diff = self.base.length * self.left_length_coef * cos(self.left_angle/180 * pi)
