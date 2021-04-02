@@ -3,7 +3,7 @@
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
         "base_length": 200,
-        "base_angle": 45,
+        "base_angle": 60,
         "angle_lower_bound": 90,
         "angle_upper_bound": 180,
         "length_lower_bound": 1,
@@ -30,7 +30,7 @@
 	"reflective_factor" : 0.98,
 	"inverse_square_law": "No",
 	"cosine_error": "No",
-        "criterion": "efficiency"
+        "criterion": "light pollution"
 	
     }
 }

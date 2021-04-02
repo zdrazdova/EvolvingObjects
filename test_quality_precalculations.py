@@ -2,11 +2,11 @@ import math
 from typing import List, Tuple
 
 import pytest
-from sympy import Rational, Point
+from sympy import Rational, Point, Segment
 
 from custom_ray import MyRay
 from quality_precalculations import intensity_of_intersections, sum_intensity, compute_proportional_intensity, \
-    compute_segments_intensity
+    compute_segments_intensity, rays_upwards
 
 
 @pytest.mark.parametrize(
@@ -62,4 +62,18 @@ def test_compute_segments_intensity(intersections_on: List[Tuple[Rational, float
 )
 def test_compute_proportional_intensity(segments_intensity: List[float], expected: List[float]):
     actual = compute_proportional_intensity(segments_intensity=segments_intensity)
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    ['rays', 'expected'],
+    [
+        [[], 0],
+        [[[Segment(Point(0, 0), Point(1, 1))]], 1],
+        [[[Segment(Point(0, 0), Point(1, 1)), Segment(Point(1, 1), Point(0, -3))]], 0],
+
+    ]
+)
+def test_rays_upwards(rays: List[List[Segment]], expected: int):
+    actual = rays_upwards(rays=rays)
     assert actual == expected

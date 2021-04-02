@@ -3,7 +3,7 @@ import random
 import auxiliary as ax
 import custom_operators as co
 from custom_geometry import compute_intersections, compute_reflections_two_segments
-from quality_assesment import glare_reduction, efficiency, illuminance_uniformity
+from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
 from deap import base
 from deap import creator
@@ -18,6 +18,8 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 
 def evaluate(individual: Component, env: Environment):
     compute_reflections_two_segments(individual, env.reflective_factor)
+    if env.quality_criterion == "light pollution":
+        return light_pollution(individual.original_rays)
     if env.quality_criterion == "glare reduction":
         return glare_reduction(individual)
     road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)

@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from sympy import Rational
+from sympy import Rational, Segment
 
 from custom_geometry import prepare_intersections
 from custom_ray import MyRay
@@ -60,7 +60,6 @@ def compute_proportional_intensity(segments_intensity: List[float]) -> List[floa
     Compute list of intensities for all segments proportional to maximum segment intensity
 
     :param segments_intensity: List of intensity of rays intersecting the road segments
-    :param road_sections: number of sections of the road
     :return: List of
     """
     road_sections = len(segments_intensity)
@@ -71,3 +70,14 @@ def compute_proportional_intensity(segments_intensity: List[float]) -> List[floa
     for segment in range(road_sections):
         segments_intensity_proportional[segment] = segments_intensity[segment] / max_intensity
     return segments_intensity_proportional
+
+
+def rays_upwards(rays: List[List[Segment]]):
+    upwards_rays_counter = 0
+    for ray in rays:
+        last_segment = ray[-1]
+        start_y = last_segment.p1.y
+        end_y = last_segment.p2.y
+        if end_y > start_y:
+            upwards_rays_counter += 1
+    return upwards_rays_counter
