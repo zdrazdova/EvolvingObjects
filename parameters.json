@@ -1,6 +1,6 @@
 {
     "lamp": {
-        "number_of_rays": 20,
+        "number_of_rays": 6,
 	"ray_distribution": "uniform",
         "base_length": 200,
         "base_angle": 15,
@@ -13,10 +13,10 @@
         "start": -1000,
         "end": 10000, 
 	"depth": -8000,
-	"sections": 4
+	"sections": 6
     },
     "evolution": {
-        "population_size": 10,
+        "population_size": 3,
         "number_of_generations": 100,
         "operators": {
             "mutation": {
@@ -30,8 +30,7 @@
 	"reflective_factor" : 0.98,
 	"inverse_square_law": "No",
 	"cosine_error": "No",
-        "criterion": "efficiency"
-	
+        "criterion": "light pollution"
     }
 }
 

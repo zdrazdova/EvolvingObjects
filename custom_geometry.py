@@ -3,6 +3,7 @@ from typing import List, Tuple
 from sympy import Rational, sin
 from sympy.geometry import Ray, Point, Segment
 
+from auxiliary import print_ray
 from component import Component
 from custom_ray import MyRay
 
@@ -79,6 +80,43 @@ def compute_reflection_segment(ray_array, segment, previous_intersection, ray_in
         ray_array = new_ray_array
         return True, ray_array, intersection[0], ray_intensity
     return False, ray_array, previous_intersection, ray_intensity
+
+
+def compute_reflection_segment_simple(ray_array, segment):
+    """
+    Compute reflection of last part of the ray from given segment. If there is an intersection of ray and segment,
+    compute reflected ray, update ray intensity, update ray array. If there is not, return False and original values.
+
+    :param ray_array: array representing parts of ray
+    :param segment: segment that the ray should reflect from
+    :param previous_intersection: previous intersection of given ray on this segment
+    :param ray_intensity: intensity of ray before reflection
+    :param r_factor: reflective factor
+    :return: True/False whether the ray was reflected, possibly updated ray array, previous intersection and intensity
+    """
+    last_ray = ray_array[-1]
+    print(last_ray)
+    print(segment)
+    intersection = segment.intersection(last_ray)
+    if intersection:
+        reflected_ray, ray_intensity = compute_reflection(last_ray, segment, 1, 1)
+        new_ray_array = ray_array[:-1]
+        new_ray_array.append(Ray(last_ray.p1, intersection[0]))
+        new_ray_array.append(reflected_ray)
+        ray_array = new_ray_array
+    return ray_array
+
+
+def compute_reflection_multiple_segments(ind: Component):
+    for ray in ind.original_rays:
+        print_ray(ray.ray)
+        ray.ray_array = [ray.ray]
+        segment = closest_segment(ind.reflective_segments, ray.ray)
+        if len(segment) == 1:
+            print(segment[0])
+            ray.ray_array = compute_reflection_segment_simple(ray.ray_array, segment[0])
+
+
 
 
 def compute_reflections_two_segments(ind: Component, r_factor: float):
@@ -159,3 +197,18 @@ def prepare_intersections(points: List[Tuple[Rational, float]]) -> List[Tuple[fl
     :return: List of tuples (x-coord to float, intensity of incident ray) sorted according to first item
     """
     return sorted([(float(x), y) for x, y in points])
+
+
+def closest_segment(segments: List[Segment], ray: Ray):
+    intersection_dict = {}
+    for segment in segments:
+        intersection = ray.intersection(segment)
+        if intersection:
+            ray_segment = Segment(ray.p1, intersection[0])
+            length = ray_segment.length
+            intersection_dict.setdefault(segment, length)
+    if intersection_dict == {}:
+        return []
+    min_value = min(intersection_dict.values())
+    segment = [key for key in intersection_dict if intersection_dict[key] == min_value]
+    return segment

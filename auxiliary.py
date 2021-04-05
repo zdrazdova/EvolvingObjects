@@ -128,6 +128,13 @@ def draw(ind: Component, name: str, env: Environment):
             ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
             float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
 
+        # reflective segments
+        for segment in ind.reflective_segments:
+            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+                segment.p1.x + x_offset, -segment.p1.y + y_offset,
+                float(segment.p2.x) + x_offset, float(-segment.p2.y) + y_offset))
+
+
         f.write('</svg>')
 
 

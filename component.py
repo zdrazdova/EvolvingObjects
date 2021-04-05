@@ -35,6 +35,8 @@ class Component:
         self.compute_right_segment()
         self.compute_left_segment()
 
+        self.reflective_segments = generate_reflective_segments(number_of_segments=4, distance_limit=400, length_limit=400)
+
         self.intersections_on = []
         self.intersections_on_intensity = 0
         self.no_of_reflections = 0
@@ -100,3 +102,18 @@ class Component:
             left_end_y = base_left_p.y - y_diff
 
         self.left_segment = Segment(base_left_p, Point(float(left_end_x), float(left_end_y)))
+
+
+def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int):
+    reflective_segments = []
+    for index in range(number_of_segments):
+        origin = Point(random.randint(-distance_limit, distance_limit), random.randint(-distance_limit, distance_limit))
+        end = Point(origin.x+random.randint(-length_limit, length_limit),
+                    origin.y+random.randint(-length_limit, length_limit))
+        segment = Segment(origin, end)
+
+        reflective_segments.append(segment)
+    return reflective_segments
+
+
+

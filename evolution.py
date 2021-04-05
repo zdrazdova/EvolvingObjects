@@ -2,7 +2,8 @@ import random
 import math
 
 from auxiliary import draw, log_stats_init, log_stats_append
-from custom_geometry import compute_intersections, compute_reflections_two_segments
+from custom_geometry import compute_intersections, compute_reflections_two_segments, \
+    compute_reflection_multiple_segments
 from custom_operators import mate, mutate_angle, mutate_length
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
@@ -18,7 +19,9 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 
 
 def evaluate(individual: Component, env: Environment):
-    compute_reflections_two_segments(individual, env.reflective_factor)
+    compute_reflection_multiple_segments(individual)
+    #compute_reflections_two_segments(individual, env.reflective_factor)
+    return light_pollution(individual.original_rays)
     if env.quality_criterion == "light pollution":
         return light_pollution(individual.original_rays)
     if env.quality_criterion == "glare reduction":
@@ -51,6 +54,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
     # Initiating first population
     pop = toolbox.population(n=population_size)
 
+    draw(pop[0], f"{0}", env)
     # Evaluating fitness
     fitnesses = []
     for item in pop:
