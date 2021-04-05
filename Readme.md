@@ -10,7 +10,7 @@ user can set program parameters and evaluation criteria in file **parameters.jso
 There are examples for each criterion:
 
 #### Used parameters
-{
+`{
     "lamp": {
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
@@ -44,12 +44,14 @@ There are examples for each criterion:
 	"cosine_error": "No",
         "criterion": "efficiency"
     }
-}
+}`
 
 #### Glare reduction
 
-![Glare reduction](stats/glare_reduction.svg)
-![Glare reduction](stats/img-best50_glare_reduction.png)
+<img src="stats/glare_reduction.svg" alt="drawing" width="600"/>
+
+<img src="stats/img-best50_glare_reduction.png" alt="drawing" width="600"/>
+
 
 
 
