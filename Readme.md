@@ -53,6 +53,25 @@ There are examples for each criterion:
 <img src="stats/img-best50_glare_reduction.png" alt="drawing" width="600"/>
 
 
+#### Efficiency
+
+<img src="stats/efficiency.svg" alt="drawing" width="600"/>
+
+<img src="stats/img-best50_efficiency.png" alt="drawing" width="600"/>
+
+
+#### Light pollution
+
+<img src="stats/light_pollution.svg" alt="drawing" width="600"/>
+
+<img src="stats/img-best50_light_efficiency.png" alt="drawing" width="600"/>
+
+
+#### Illuminance uniformity
+
+<img src="stats/illuminance_uniformity.svg" alt="drawing" width="600"/>
+
+<img src="stats/img-best50_illuminance_uniformity.png" alt="drawing" width="600"/>
 
 
 

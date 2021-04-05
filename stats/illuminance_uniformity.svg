@@ -48,27 +48,27 @@
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='black'  d='M151.2,391.5 L169.9,391.5 M947.4,391.5 L928.7,391.5  '/>	<g transform="translate(133.7,399.7)" stroke="none" fill="black" font-family="Courier New" font-size="25.00"  text-anchor="end">
-		<text><tspan font-family="Courier New" > 20</tspan></text>
+		<text><tspan font-family="Courier New" > 0.2</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='black'  d='M151.2,303.0 L169.9,303.0 M947.4,303.0 L928.7,303.0  '/>	<g transform="translate(133.7,311.2)" stroke="none" fill="black" font-family="Courier New" font-size="25.00"  text-anchor="end">
-		<text><tspan font-family="Courier New" > 40</tspan></text>
+		<text><tspan font-family="Courier New" > 0.4</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='black'  d='M151.2,214.6 L169.9,214.6 M947.4,214.6 L928.7,214.6  '/>	<g transform="translate(133.7,222.8)" stroke="none" fill="black" font-family="Courier New" font-size="25.00"  text-anchor="end">
-		<text><tspan font-family="Courier New" > 60</tspan></text>
+		<text><tspan font-family="Courier New" > 0.6</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='black'  d='M151.2,126.1 L169.9,126.1 M947.4,126.1 L928.7,126.1  '/>	<g transform="translate(133.7,134.3)" stroke="none" fill="black" font-family="Courier New" font-size="25.00"  text-anchor="end">
-		<text><tspan font-family="Courier New" > 80</tspan></text>
+		<text><tspan font-family="Courier New" > 0.8</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
 	<path stroke='black'  d='M151.2,37.6 L169.9,37.6 M947.4,37.6 L928.7,37.6  '/>	<g transform="translate(133.7,45.8)" stroke="none" fill="black" font-family="Courier New" font-size="25.00"  text-anchor="end">
-		<text><tspan font-family="Courier New" > 100</tspan></text>
+		<text><tspan font-family="Courier New" > 1</tspan></text>
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="1.00" stroke-linecap="butt" stroke-linejoin="miter">
@@ -126,13 +126,13 @@
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<path stroke='rgb(255,   0, 102)'  d='M823.7,405.1 L912.4,405.1 M151.2,426.9 L167.1,426.9 L183.0,426.9 L199.0,422.5 L214.9,422.5 L230.8,418.1
-		L246.7,418.1 L262.7,413.6 L278.6,413.6 L294.5,413.6 L310.4,413.6 L326.4,409.2 L342.3,409.2 L358.2,404.8
-		L374.1,404.8 L390.1,404.8 L406.0,404.8 L421.9,404.8 L437.8,404.8 L453.8,400.4 L469.7,400.4 L485.6,395.9
-		L501.5,395.9 L517.5,387.1 L533.4,387.1 L549.3,387.1 L565.2,378.2 L581.1,369.4 L597.1,356.1 L613.0,356.1
-		L628.9,356.1 L644.8,356.1 L660.8,356.1 L676.7,351.7 L692.6,351.7 L708.5,307.5 L724.5,307.5 L740.4,307.5
-		L756.3,263.2 L772.2,130.5 L788.2,104.0 L804.1,104.0 L820.0,104.0 L835.9,95.1 L851.9,95.1 L867.8,95.1
-		L883.7,95.1 L899.6,95.1 L915.6,95.1 L931.5,95.1 L947.4,95.1  '/></g>
+	<path stroke='rgb(255,   0, 102)'  d='M823.7,405.1 L912.4,405.1 M151.2,353.5 L167.1,323.9 L183.0,316.8 L199.0,316.8 L214.9,316.8 L230.8,316.8
+		L246.7,316.8 L262.7,263.9 L278.6,227.0 L294.5,227.0 L310.4,177.9 L326.4,177.9 L342.3,177.9 L358.2,177.9
+		L374.1,177.9 L390.1,177.9 L406.0,177.9 L421.9,177.9 L437.8,177.9 L453.8,177.9 L469.7,177.9 L485.6,177.9
+		L501.5,177.9 L517.5,177.9 L533.4,177.9 L549.3,177.9 L565.2,177.9 L581.1,177.9 L597.1,177.9 L613.0,177.9
+		L628.9,177.9 L644.8,177.9 L660.8,177.9 L676.7,177.9 L692.6,177.9 L708.5,177.9 L724.5,177.9 L740.4,177.9
+		L756.3,177.9 L772.2,177.9 L788.2,177.9 L804.1,177.9 L820.0,177.9 L835.9,177.9 L851.9,177.9 L867.8,177.9
+		L883.7,177.9 L899.6,177.9 L915.6,177.9 L931.5,177.9 L947.4,152.5  '/></g>
 	</g>
 	<g id="gnuplot_plot_2" ><title>Average fitness</title>
 <g fill="none" color="black" stroke="currentColor" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
@@ -141,13 +141,13 @@
 	</g>
 </g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
-	<path stroke='rgb(  0,  38,  77)'  d='M823.7,442.6 L912.4,442.6 M151.2,444.2 L167.1,434.4 L183.0,433.1 L199.0,430.0 L214.9,427.8 L230.8,424.3
-		L246.7,423.8 L262.7,422.0 L278.6,418.9 L294.5,416.7 L310.4,416.3 L326.4,416.7 L342.3,414.1 L358.2,411.9
-		L374.1,413.2 L390.1,410.1 L406.0,410.1 L421.9,408.8 L437.8,409.2 L453.8,405.7 L469.7,403.9 L485.6,403.0
-		L501.5,405.2 L517.5,402.6 L533.4,398.6 L549.3,395.1 L565.2,392.4 L581.1,385.3 L597.1,380.5 L613.0,379.1
-		L628.9,376.5 L644.8,370.3 L660.8,366.3 L676.7,365.9 L692.6,360.6 L708.5,348.2 L724.5,341.5 L740.4,328.3
-		L756.3,318.5 L772.2,288.9 L788.2,276.1 L804.1,273.0 L820.0,229.2 L835.9,211.5 L851.9,182.3 L867.8,177.8
-		L883.7,134.5 L899.6,215.0 L915.6,216.8 L931.5,246.4 L947.4,226.1  '/></g>
+	<path stroke='rgb(  0,  38,  77)'  d='M823.7,442.6 L912.4,442.6 M151.2,461.0 L167.1,425.6 L183.0,441.1 L199.0,439.2 L214.9,396.4 L230.8,381.4
+		L246.7,402.0 L262.7,374.5 L278.6,331.3 L294.5,291.9 L310.4,240.2 L326.4,217.6 L342.3,268.2 L358.2,209.0
+		L374.1,289.8 L390.1,240.0 L406.0,262.4 L421.9,312.2 L437.8,264.5 L453.8,224.8 L469.7,260.0 L485.6,234.7
+		L501.5,246.7 L517.5,241.1 L533.4,271.3 L549.3,246.9 L565.2,216.6 L581.1,255.3 L597.1,216.6 L613.0,194.8
+		L628.9,252.4 L644.8,285.6 L660.8,252.7 L676.7,239.6 L692.6,230.9 L708.5,282.6 L724.5,318.6 L740.4,261.1
+		L756.3,216.6 L772.2,306.4 L788.2,252.3 L804.1,195.0 L820.0,216.6 L835.9,274.0 L851.9,246.7 L867.8,246.9
+		L883.7,225.6 L899.6,252.6 L915.6,252.6 L931.5,257.6 L947.4,303.8  '/></g>
 	</g>
 <g fill="none" color="black" stroke="currentColor" stroke-width="2.00" stroke-linecap="butt" stroke-linejoin="miter">
 </g>
