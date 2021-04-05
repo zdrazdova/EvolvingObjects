@@ -64,7 +64,7 @@ There are examples for each criterion:
 
 <img src="stats/light_pollution.svg" alt="drawing" width="600"/>
 
-<img src="stats/img-best50_light_efficiency.png" alt="drawing" width="600"/>
+<img src="stats/img-best60_light_pollution.png" alt="drawing" width="600"/>
 
 
 #### Illuminance uniformity
