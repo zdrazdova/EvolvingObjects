@@ -49,7 +49,7 @@ There are examples for each criterion:
 #### Glare reduction
 
 ![Glare reduction](stats/glare_reduction.svg)
-![Glare reduction](stats/img-best50_glare_reduction.svg)
+![Glare reduction](stats/img-best50_glare_reduction.png)
 
 
 
