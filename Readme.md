@@ -1,3 +1,15 @@
+## Evolving objects overview
+
+program is run: **python3 evolution.py**
+
+There are four main criteria for evaluation: **efficiency**, **illuminance uniformity**, **glare reduction** and **light pollution**
+
+user can set program parameters and evaluation criteria in file **parameters.json**
+
+### Examples
+There are examples for each criterion:
+
+#### Used parameters
 {
     "lamp": {
         "number_of_rays": 20,
@@ -31,7 +43,14 @@
 	"inverse_square_law": "No",
 	"cosine_error": "No",
         "criterion": "efficiency"
-	
     }
 }
+
+#### Glare reduction
+
+![Glare reduction](stats/glare_reduction.svg)
+![Glare reduction](stats/img-best50_glare_reduction.svg)
+
+
+
 

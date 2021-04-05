@@ -1,8 +1,9 @@
 import random
+import math
 
-import auxiliary as ax
-import custom_operators as co
+from auxiliary import draw, log_stats_init, log_stats_append
 from custom_geometry import compute_intersections, compute_reflections_two_segments
+from custom_operators import mate, mutate_angle, mutate_length
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
 from deap import base
@@ -59,8 +60,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
 
     # Rendering individuals in initial population as images
     for i in range(len(pop)):
-        ax.draw(pop[i], f"{i}", env)
+        draw(pop[i], f"{i}", env)
     print("Drawing initial population finished")
+
+    stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
+    log_stats_init(f"stats", stats_line)
 
     # Initiating elitism
     hof = HallOfFame(1)
@@ -81,7 +85,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             # cross two individuals with probability xover_prob
             if random.random() < xover_prob:
-                co.mate(child1, child2)
+                mate(child1, child2)
                 # fitness values of the children must be recalculated later
                 child1.fitness = 0
                 child2.fitness = 0
@@ -89,10 +93,10 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
         for mutant in offspring:
             # mutate an individual with probability mut_angle_prob and mut_length_prob
             if random.random() < mut_angle_prob:
-                co.mutate_angle(mutant)
+                mutate_angle(mutant)
                 mutant.fitness = 0
             if random.random() < mut_length_prob:
-                co.mutate_length(mutant, length_upper_bound, length_lower_bound)
+                mutate_length(mutant, length_upper_bound, length_lower_bound)
                 mutant.fitness = 0
 
         # Evaluate the individuals with an invalid fitness
@@ -116,8 +120,10 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
             fitnesses.append(evaluate(item, env))
         print(fitnesses)
 
+        stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}"
+        log_stats_append(f"stats", stats_line)
         print(f"Best individual has fitness: {best_ind.fitness}, number of reflections is {best_ind.no_of_reflections}")
-        ax.draw(best_ind, f"best{g}", env)
+        draw(best_ind, f"best{g}", env)
 
     print("-- End of (successful) evolution --")
     print("--")

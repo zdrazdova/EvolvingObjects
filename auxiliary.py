@@ -1,3 +1,4 @@
+from sympy import Segment
 from sympy.geometry import Ray, Point
 
 from component import Component
@@ -28,6 +29,20 @@ def print_point_array(points: [Point]):
     print(outcome)
 
 
+def log_stats_init(name: str, line: str):
+    stats_name = "stats/log-" + str(name) + ".csv"
+    with open(stats_name, "w") as f:
+        f.write(f"generation, best fitness, average fitness \n")
+        f.write(line)
+
+
+def log_stats_append(name: str, line: str):
+    stats_name = "stats/log-" + str(name) + ".csv"
+    with open(stats_name, "a") as f:
+        f.write('\n')
+        f.write(line)
+
+
 def draw(ind: Component, name: str, env: Environment):
     svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
     # Generating drawing in SVG format
@@ -52,6 +67,7 @@ def draw(ind: Component, name: str, env: Environment):
                     .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                             float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
 
+        left, right, bottom, top = calculate_borders(env.road_start, env.road_end, env.road_depth)
         for ray in ind.original_rays:
             array = ray.ray_array
             alpha = str(round(ray.intensity, 3))
@@ -70,6 +86,7 @@ def draw(ind: Component, name: str, env: Environment):
                         .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                                 float(intersection.x) + x_offset, - float(intersection.y) + y_offset, color, alpha))
             else:
+                x_end, y_end = boundary_intersection(left, right, bottom, top, r)
                 x_diff = float(r.points[1].x - r.points[0].x) * 50
                 y_diff = float(r.points[1].y - r.points[0].y) * 50
                 f.write(
@@ -77,6 +94,7 @@ def draw(ind: Component, name: str, env: Environment):
                     '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                                 float(r.points[0].x) + x_offset + x_diff,
                                 -float(r.points[0].y) + y_offset - y_diff,
+                                #x_end, -y_end,
                                 color, alpha))
 
         f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
@@ -111,3 +129,34 @@ def draw(ind: Component, name: str, env: Environment):
             float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
 
         f.write('</svg>')
+
+
+def calculate_borders(road_start: int, road_end: int, road_depth: int) -> (Segment, Segment, Segment, Segment):
+    top_left = Point(0, 0)
+    bottom_left = Point(0, road_depth - 2000)
+    if road_start < 0:
+        top_left = Point(road_start-1000, 0)
+        bottom_left = Point(road_start-1000, road_depth - 2000)
+    top_right = Point(road_end + 2000, 0)
+    bottom_right = Point(road_end + 2000, road_depth - 2000)
+    left = Segment(top_left, bottom_left)
+    right = Segment(top_right, bottom_right)
+    bottom = Segment(bottom_left, bottom_right)
+    top = Segment(top_left, top_right)
+    return left, right, bottom, top
+
+
+def boundary_intersection(left: Segment, right: Segment, bottom: Segment, top: Segment, ray: Ray) -> (float, float):
+    shifted_ray = Ray(Point(ray.p1.x+1000, ray.p1.y-1000), Point(ray.p2.x+1000, ray.p2.y-1000))
+    intersection = left.intersection(shifted_ray)
+    if intersection:
+        return float(intersection[0].x), float(intersection[0].y)
+    intersection = right.intersection(shifted_ray)
+    if intersection:
+        return float(intersection[0].x), float(intersection[0].y)
+    intersection = bottom.intersection(shifted_ray)
+    if intersection:
+        return float(intersection[0].x), float(intersection[0].y)
+    intersection = top.intersection(shifted_ray)
+    if intersection:
+        return float(intersection[0].x), float(intersection[0].y)
