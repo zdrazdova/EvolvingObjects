@@ -36,6 +36,7 @@ class Component:
         self.compute_left_segment()
 
         self.reflective_segments = generate_reflective_segments(number_of_segments=4, distance_limit=400, length_limit=400)
+        self.reflective_segments.append(self.base)
 
         self.intersections_on = []
         self.intersections_on_intensity = 0

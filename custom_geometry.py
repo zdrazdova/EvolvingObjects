@@ -95,27 +95,39 @@ def compute_reflection_segment_simple(ray_array, segment):
     :return: True/False whether the ray was reflected, possibly updated ray array, previous intersection and intensity
     """
     last_ray = ray_array[-1]
-    print(last_ray)
-    print(segment)
+    #print_ray(last_ray)
+    #print(segment)
     intersection = segment.intersection(last_ray)
     if intersection:
         reflected_ray, ray_intensity = compute_reflection(last_ray, segment, 1, 1)
+        #print_ray(reflected_ray)
         new_ray_array = ray_array[:-1]
         new_ray_array.append(Ray(last_ray.p1, intersection[0]))
         new_ray_array.append(reflected_ray)
         ray_array = new_ray_array
+        #print_ray(ray_array[0])
+        #print_ray(ray_array[1])
     return ray_array
 
 
 def compute_reflection_multiple_segments(ind: Component):
     for ray in ind.original_rays:
-        print_ray(ray.ray)
+        #print_ray(ray.ray)
         ray.ray_array = [ray.ray]
-        segment = closest_segment(ind.reflective_segments, ray.ray)
-        if len(segment) == 1:
-            print(segment[0])
-            ray.ray_array = compute_reflection_segment_simple(ray.ray_array, segment[0])
-
+        last_reflection = ind.reflective_segments[-1]
+        reflection_exists = True
+        while reflection_exists:
+            #print("---")
+            segment = closest_segment(ind.reflective_segments, ray.ray_array[-1], last_reflection)
+            if len(segment) == 1:
+                #print(segment[0])
+                #print(len(ray.ray_array))
+                ray.ray_array = compute_reflection_segment_simple(ray.ray_array, segment[0])
+                last_reflection = segment[0]
+                #print(len(ray.ray_array))
+                #print_ray(ray.ray_array[-1])
+            else:
+                reflection_exists = False
 
 
 
@@ -199,11 +211,12 @@ def prepare_intersections(points: List[Tuple[Rational, float]]) -> List[Tuple[fl
     return sorted([(float(x), y) for x, y in points])
 
 
-def closest_segment(segments: List[Segment], ray: Ray):
+def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment):
     intersection_dict = {}
     for segment in segments:
         intersection = ray.intersection(segment)
-        if intersection:
+        #print(segment, last_reflection)
+        if intersection and segment != last_reflection:
             ray_segment = Segment(ray.p1, intersection[0])
             length = ray_segment.length
             intersection_dict.setdefault(segment, length)
