@@ -1,6 +1,7 @@
+from math import pi
 from typing import List, Tuple
 
-from sympy import Rational, sin
+from sympy import Rational, sin, cos
 from sympy.geometry import Ray, Point, Segment
 
 from auxiliary import print_ray
@@ -95,39 +96,31 @@ def compute_reflection_segment_simple(ray_array, segment):
     :return: True/False whether the ray was reflected, possibly updated ray array, previous intersection and intensity
     """
     last_ray = ray_array[-1]
-    #print_ray(last_ray)
-    #print(segment)
     intersection = segment.intersection(last_ray)
     if intersection:
         reflected_ray, ray_intensity = compute_reflection(last_ray, segment, 1, 1)
-        #print_ray(reflected_ray)
         new_ray_array = ray_array[:-1]
         new_ray_array.append(Ray(last_ray.p1, intersection[0]))
         new_ray_array.append(reflected_ray)
         ray_array = new_ray_array
-        #print_ray(ray_array[0])
-        #print_ray(ray_array[1])
     return ray_array
 
 
 def compute_reflection_multiple_segments(ind: Component):
+    no_of_reflection = 0
     for ray in ind.original_rays:
-        #print_ray(ray.ray)
         ray.ray_array = [ray.ray]
-        last_reflection = ind.reflective_segments[-1]
+        last_reflection = ind.base
         reflection_exists = True
         while reflection_exists:
-            #print("---")
-            segment = closest_segment(ind.reflective_segments, ray.ray_array[-1], last_reflection)
+            segment = closest_segment(ind.reflective_segments+[ind.base], ray.ray_array[-1], last_reflection)
             if len(segment) == 1:
-                #print(segment[0])
-                #print(len(ray.ray_array))
                 ray.ray_array = compute_reflection_segment_simple(ray.ray_array, segment[0])
                 last_reflection = segment[0]
-                #print(len(ray.ray_array))
-                #print_ray(ray.ray_array[-1])
+                no_of_reflection += 1
             else:
                 reflection_exists = False
+    ind.no_of_reflections = no_of_reflection
 
 
 
@@ -225,3 +218,33 @@ def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment)
     min_value = min(intersection_dict.values())
     segment = [key for key in intersection_dict if intersection_dict[key] == min_value]
     return segment
+
+
+def rotate_segment(segment, angle):
+    a = [segment.p1.x, segment.p1.y]
+    b = [segment.p2.x, segment.p2.y]
+
+    angle = angle * pi / 180
+
+    midpoint = [(a[0] + b[0])/2, (a[1] + b[1])/2]
+    a_mid = [a[0] - midpoint[0], a[1] - midpoint[1]]
+    b_mid = [b[0] - midpoint[0], b[1] - midpoint[1]]
+
+    a_rotated = [
+        cos(angle) * a_mid[0] - sin(angle) * a_mid[1],
+        sin(angle) * a_mid[0] + cos(angle) * a_mid[1]
+    ]
+    b_rotated = [
+        cos(angle) * b_mid[0] - sin(angle) * b_mid[1],
+        sin(angle) * b_mid[0] + cos(angle) * b_mid[1]
+    ]
+
+    a_rotated[0] = (a_rotated[0] + midpoint[0])
+    a_rotated[1] = (a_rotated[1] + midpoint[1])
+    b_rotated[0] = (b_rotated[0] + midpoint[0])
+    b_rotated[1] = (b_rotated[1] + midpoint[1])
+
+
+    rotated_segment = Segment(Point(int(a_rotated[0]), int(a_rotated[1])), Point(int(b_rotated[0]), int(b_rotated[1])))
+
+    return rotated_segment

@@ -4,7 +4,7 @@ import math
 from auxiliary import draw, log_stats_init, log_stats_append
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments
-from custom_operators import mate, mutate_angle, mutate_length
+from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
 from deap import base
@@ -19,9 +19,10 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 
 
 def evaluate(individual: Component, env: Environment):
-    compute_reflection_multiple_segments(individual)
-    #compute_reflections_two_segments(individual, env.reflective_factor)
-    return light_pollution(individual.original_rays)
+    if env.configuration == "two connected":
+        compute_reflections_two_segments(individual, env.reflective_factor)
+    if env.configuration == "multiple free":
+        compute_reflection_multiple_segments(individual)
     if env.quality_criterion == "light pollution":
         return light_pollution(individual.original_rays)
     if env.quality_criterion == "glare reduction":
@@ -36,8 +37,10 @@ def evaluate(individual: Component, env: Environment):
     return efficiency(individual)
 
 
-def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angle_lower_bound: int, angle_upper_bound: int,
-              length_lower_bound: int, length_upper_bound: int, population_size: int, number_of_generations: int,
+def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
+              angle_lower_bound: int, angle_upper_bound: int, length_lower_bound: int, length_upper_bound: int,
+              no_of_reflective_segments: int, distance_limit: int, length_limit: int,
+              population_size: int, number_of_generations: int,
               mut_angle_prob: float, mut_length_prob: float, xover_prob: float):
 
     # Initiating evolutionary algorithm
@@ -47,7 +50,8 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
     toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays,
                      ray_distribution=ray_distribution, angle_lower_bound=angle_lower_bound,
                      angle_upper_bound=angle_upper_bound, length_lower_bound=length_lower_bound,
-                     length_upper_bound=length_upper_bound)
+                     length_upper_bound=length_upper_bound, no_of_reflective_segments=no_of_reflective_segments,
+                     distance_limit=distance_limit, length_limit=length_limit)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("select", tools.selTournament, tournsize=2)
 
@@ -95,6 +99,16 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
                 child2.fitness = 0
 
         for mutant in offspring:
+            if random.random() < 0:
+                mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "x", 100)
+                mutant.fitness = 0
+            if random.random() < 0:
+                mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "y", 100)
+                mutant.fitness = 0
+            if random.random() < 0:
+                mutant.reflective_segments = rotate_one_segment(mutant.reflective_segments, 30)
+                mutant.fitness = 0
+
             # mutate an individual with probability mut_angle_prob and mut_length_prob
             if random.random() < mut_angle_prob:
                 mutate_angle(mutant)
@@ -126,7 +140,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str, angl
 
         stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}"
         log_stats_append(f"stats", stats_line)
-        print(f"Best individual has fitness: {best_ind.fitness}, number of reflections is {best_ind.no_of_reflections}")
+        print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)
 
     print("-- End of (successful) evolution --")
@@ -146,6 +160,7 @@ def main():
     road_end = config.road.end
     road_depth = config.road.depth
     road_sections = config.road.sections
+    configuration = config.lamp.configuration
 
     # Load parameters for evaluation
     criterion = config.evaluation.criterion
@@ -154,17 +169,23 @@ def main():
 
     # Init environment
     env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
-                      criterion, cosine_error, reflective_factor)
+                      criterion, cosine_error, reflective_factor, configuration)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays
     ray_distribution = config.lamp.ray_distribution
 
-    # Load limits for reflective surfaces
-    angle_lower_bound = config.lamp.angle_lower_bound
-    angle_upper_bound = config.lamp.angle_upper_bound
-    length_lower_bound = config.lamp.length_lower_bound
-    length_upper_bound = config.lamp.length_upper_bound
+    # Load limits for two connected reflective surfaces
+    angle_lower_bound = config.lamp.two_connected.angle_lower_bound
+    angle_upper_bound = config.lamp.two_connected.angle_upper_bound
+    length_lower_bound = config.lamp.two_connected.length_lower_bound
+    length_upper_bound = config.lamp.two_connected.length_upper_bound
+
+    # Load limits for multiple free reflective surfaces
+    no_of_reflective_segments = config.lamp.multiple_free.no_of_reflective_segments
+    distance_limit = config.lamp.multiple_free.distance_limit
+    length_limit = config.lamp.multiple_free.length_limit
+
 
     population_size = config.evolution.population_size
     number_of_generations = config.evolution.number_of_generations
@@ -178,8 +199,8 @@ def main():
 
     # Run evolution algorithm
     evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
-              length_lower_bound, length_upper_bound, population_size, number_of_generations,
-              angle_mut_prob, length_mut_prob, xover_prob)
+              length_lower_bound, length_upper_bound, no_of_reflective_segments, distance_limit, length_limit,
+              population_size, number_of_generations, angle_mut_prob, length_mut_prob, xover_prob)
 
 
 if __name__ == "__main__":

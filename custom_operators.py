@@ -1,6 +1,37 @@
 import random
+from typing import List
+
+from sympy import Segment, Point
 
 from component import Component
+from custom_geometry import rotate_segment
+
+
+def shift_one_segment(reflective_segments: List[Segment], axis: str, shift_limit: int) -> List[Segment]:
+    chosen_segment_index = random.randint(0, len(reflective_segments)-1)
+    chosen_segment = reflective_segments[chosen_segment_index]
+    shift_amount = random.randint(-shift_limit, shift_limit)
+    if axis == "x":
+        shifted_segment = Segment(Point(chosen_segment.p1.x + shift_amount, chosen_segment.p1.y),
+                                  Point(chosen_segment.p2.x + shift_amount, chosen_segment.p2.y))
+    else:
+        shifted_segment = Segment(Point(chosen_segment.p1.x, chosen_segment.p1.y + shift_amount),
+                                  Point(chosen_segment.p2.x, chosen_segment.p2.y + shift_amount))
+    modified_segments = reflective_segments[:chosen_segment_index]
+    modified_segments.append(shifted_segment)
+    modified_segments = modified_segments + reflective_segments[chosen_segment_index+1:]
+    return modified_segments
+
+
+def rotate_one_segment(reflective_segments: List[Segment], angle_limit: int) -> List[Segment]:
+    chosen_segment_index = random.randint(0, len(reflective_segments)-1)
+    chosen_segment = reflective_segments[chosen_segment_index]
+    shift_amount = random.randint(-angle_limit, angle_limit)
+    rotated_segment = rotate_segment(chosen_segment, shift_amount)
+    modified_segments = reflective_segments[:chosen_segment_index]
+    modified_segments.append(rotated_segment)
+    modified_segments = modified_segments + reflective_segments[chosen_segment_index+1:]
+    return modified_segments
 
 
 def mutate_length(individual: Component, length_upper_bound: int, length_lower_bound: int) -> Component:

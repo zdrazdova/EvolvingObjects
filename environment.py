@@ -5,7 +5,7 @@ from sympy import Point, Segment
 
 class Environment:
     def __init__(self, base_length: int, base_slope: int, road_start: int, road_end: int, road_depth: int,
-                 road_sections: int, criterion: str, cosine_error: str, reflective_factor: float):
+                 road_sections: int, criterion: str, cosine_error: str, reflective_factor: float, configuration: str):
         self.origin = Point(0, 0)
         self.base_slope = base_slope
 
@@ -24,3 +24,4 @@ class Environment:
         self.reflective_factor = reflective_factor
         self.cosine_error = cosine_error
         self.quality_criterion = criterion
+        self.configuration = configuration

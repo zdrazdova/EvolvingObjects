@@ -12,7 +12,8 @@ class Component:
 
     def __init__(self, env: Environment, number_of_rays: int, ray_distribution: str,
                  angle_lower_bound: int, angle_upper_bound: int,
-                 length_lower_bound: int, length_upper_bound: int):
+                 length_lower_bound: int, length_upper_bound: int,
+                 no_of_reflective_segments: int, distance_limit: int, length_limit: int):
 
         self.origin = Point(0, 0)
 
@@ -30,13 +31,15 @@ class Component:
 
         self.base = env.base
 
-        self.right_segment = None
-        self.left_segment = None
-        self.compute_right_segment()
-        self.compute_left_segment()
+        if env.configuration == "two connected":
+            self.right_segment = None
+            self.left_segment = None
+            self.compute_right_segment()
+            self.compute_left_segment()
 
-        self.reflective_segments = generate_reflective_segments(number_of_segments=4, distance_limit=400, length_limit=400)
-        self.reflective_segments.append(self.base)
+        if env.configuration == "multiple free":
+            self.reflective_segments = generate_reflective_segments(no_of_reflective_segments,
+                                                                    distance_limit, length_limit)
 
         self.intersections_on = []
         self.intersections_on_intensity = 0
