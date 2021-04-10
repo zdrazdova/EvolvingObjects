@@ -29,6 +29,8 @@ def illuminance_uniformity(segments_intensity: List[float]) -> float:
     """
     min_illuminance = min(segments_intensity)
     avg_illuminance = sum(segments_intensity)/len(segments_intensity)
+    if avg_illuminance == 0:
+        return 0
     return min_illuminance/avg_illuminance
 
 

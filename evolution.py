@@ -4,7 +4,8 @@ import math
 from auxiliary import draw, log_stats_init, log_stats_append
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments
-from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment
+from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
+    resize_one_segment
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
 from deap import base
@@ -41,7 +42,8 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               angle_lower_bound: int, angle_upper_bound: int, length_lower_bound: int, length_upper_bound: int,
               no_of_reflective_segments: int, distance_limit: int, length_limit: int,
               population_size: int, number_of_generations: int,
-              mut_angle_prob: float, mut_length_prob: float, xover_prob: float):
+              xover_prob: float, mut_angle_prob: float, mut_length_prob: float,
+              shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
 
     # Initiating evolutionary algorithm
     creator.create("Fitness", base.Fitness, weights=(1.0,))
@@ -58,7 +60,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     # Initiating first population
     pop = toolbox.population(n=population_size)
 
-    draw(pop[0], f"{0}", env)
     # Evaluating fitness
     fitnesses = []
     for item in pop:
@@ -99,23 +100,28 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                 child2.fitness = 0
 
         for mutant in offspring:
-            if random.random() < 0:
-                mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "x", 100)
-                mutant.fitness = 0
-            if random.random() < 0:
-                mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "y", 100)
-                mutant.fitness = 0
-            if random.random() < 0:
-                mutant.reflective_segments = rotate_one_segment(mutant.reflective_segments, 30)
-                mutant.fitness = 0
+            if env.configuration == "multiple free":
+                if random.random() < shift_segment_prob:
+                    mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "x")
+                    mutant.fitness = 0
+                if random.random() < shift_segment_prob:
+                    mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "y")
+                    mutant.fitness = 0
+                if random.random() < rotate_segment_prob:
+                    mutant.reflective_segments = rotate_one_segment(mutant.reflective_segments)
+                    mutant.fitness = 0
+                if random.random() < resize_segment_prob:
+                    mutant.reflective_segments = resize_one_segment(mutant.reflective_segments)
+                    mutant.fitness = 0
 
-            # mutate an individual with probability mut_angle_prob and mut_length_prob
-            if random.random() < mut_angle_prob:
-                mutate_angle(mutant)
-                mutant.fitness = 0
-            if random.random() < mut_length_prob:
-                mutate_length(mutant, length_upper_bound, length_lower_bound)
-                mutant.fitness = 0
+
+            if env.configuration == "two connected":
+                if random.random() < mut_angle_prob:
+                    mutate_angle(mutant)
+                    mutant.fitness = 0
+                if random.random() < mut_length_prob:
+                    mutate_length(mutant, length_upper_bound, length_lower_bound)
+                    mutant.fitness = 0
 
         # Evaluate the individuals with an invalid fitness
         invalid_ind = [ind for ind in offspring if ind.fitness == 0]
@@ -192,15 +198,19 @@ def main():
 
     # Load parameters for evolution
     operators = config.evolution.operators
+    xover_prob = operators.xover_prob
     angle_mut_prob = operators.mutation.angle_mutation_prob
     length_mut_prob = operators.mutation.length_mutation_prob
-    xover_prob = operators.xover_prob
+    shift_segment_prob = operators.mutation.segment_shift_prob
+    rotate_segment_prob = operators.mutation.segment_rotation_prob
+    resize_segment_prob = operators.mutation.segment_resizing_prob
 
 
     # Run evolution algorithm
     evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
               length_lower_bound, length_upper_bound, no_of_reflective_segments, distance_limit, length_limit,
-              population_size, number_of_generations, angle_mut_prob, length_mut_prob, xover_prob)
+              population_size, number_of_generations, xover_prob, angle_mut_prob, length_mut_prob,
+              shift_segment_prob, rotate_segment_prob, resize_segment_prob)
 
 
 if __name__ == "__main__":

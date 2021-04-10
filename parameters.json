@@ -3,8 +3,8 @@
         "number_of_rays": 20,
 	    "ray_distribution": "uniform",
         "base_length": 200,
-        "base_angle": 15,
-	    "configuration": "two connected",
+        "base_angle": 60,
+	    "configuration": "multiple free",
 	    "two_connected": {
 	        "angle_lower_bound": 90,
             "angle_upper_bound": 180,
@@ -12,26 +12,27 @@
             "length_upper_bound": 3
         },
         "multiple_free": {
-            "no_of_reflective_segments": 8,
+            "no_of_reflective_segments": 4,
             "distance_limit": 500,
             "length_limit": 400
         }
     },
     "road": {
-        "start": -1000,
-        "end": 10000, 
+        "start": 3000,
+        "end": 12000, 
 	    "depth": -8000,
-	    "sections": 6
+	    "sections": 3
     },
     "evolution": {
         "population_size": 10,
-        "number_of_generations": 40,
+        "number_of_generations": 50,
         "operators": {
             "mutation": {
                 "angle_mutation_prob": 0.4,
                 "length_mutation_prob": 0.4,
                 "segment_shift_prob": 0.4,
-                "segment_rotation_prob": 0.4
+                "segment_rotation_prob": 0.2,
+                "segment_resizing_prob": 0.4
             },
             "xover_prob": 0
         }
@@ -40,7 +41,7 @@
 	    "reflective_factor" : 0.98,
 	    "inverse_square_law": "No",
 	    "cosine_error": "No",
-        "criterion": "efficiency"
+        "criterion": "illuminance uniformity"
     }
 }
 

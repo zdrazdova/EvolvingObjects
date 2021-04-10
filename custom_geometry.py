@@ -220,7 +220,7 @@ def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment)
     return segment
 
 
-def rotate_segment(segment, angle):
+def rotate_segment(segment: Segment, angle: int) -> Segment:
     a = [segment.p1.x, segment.p1.y]
     b = [segment.p2.x, segment.p2.y]
 
@@ -244,7 +244,22 @@ def rotate_segment(segment, angle):
     b_rotated[0] = (b_rotated[0] + midpoint[0])
     b_rotated[1] = (b_rotated[1] + midpoint[1])
 
-
     rotated_segment = Segment(Point(int(a_rotated[0]), int(a_rotated[1])), Point(int(b_rotated[0]), int(b_rotated[1])))
 
     return rotated_segment
+
+
+def change_size_segment(segment: Segment, coefficient: float) -> Segment:
+    a = [segment.p1.x, segment.p1.y]
+    b = [segment.p2.x, segment.p2.y]
+
+    midpoint = [(a[0] + b[0])/2, (a[1] + b[1])/2]
+    x_diff_half = (b[0] - a[0]) / 2
+    y_diff_half = (b[1] - a[1]) / 2
+
+    a_changed = [midpoint[0] - coefficient * x_diff_half, midpoint[1] - coefficient * y_diff_half]
+    b_changed = [midpoint[0] + coefficient * x_diff_half, midpoint[1] + coefficient * y_diff_half]
+
+    changed_segment = Segment(Point(int(a_changed[0]), int(a_changed[1])), Point(int(b_changed[0]), int(b_changed[1])))
+
+    return changed_segment
