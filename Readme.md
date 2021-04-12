@@ -83,4 +83,9 @@ There are examples for each criterion:
 <img src="stats/random2.png" alt="drawing" width="600"/>
 <img src="stats/uniform.png" alt="drawing" width="600"/>
 
+- reflection from one plane
+
+<img src="stats/reflection.png" alt="drawing" width="600"/>
+
+
 
