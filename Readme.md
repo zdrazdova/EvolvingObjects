@@ -74,4 +74,13 @@ There are examples for each criterion:
 <img src="stats/img-best50_illuminance_uniformity.png" alt="drawing" width="600"/>
 
 
+## Evolving objects  - 3D model
+
+- first attempts with 3D model
+
+
+<img src="stats/random.svg" alt="drawing" width="600"/>
+<img src="stats/random2.svg" alt="drawing" width="600"/>
+<img src="stats/uniform.svg" alt="drawing" width="600"/>
+
 

@@ -5,16 +5,24 @@ from sympy import Point, Ray
 
 class MyRay3D:
 
-    def __init__(self, origin: Point, first_angle: int, second_angle: int):
-        self.ray_length = 1
-        # Intensity is calculated according to Lambertian distribution
-        self.intensity = abs(math.sin(math.radians(abs(first_angle)))) + abs(math.sin(math.radians(abs(second_angle))))
-        # End coordinates are calculated from ray angle
-        x_coordinate = 10 * math.cos(math.radians(first_angle)) + origin.x
-        y_coordinate = 10 * math.sin(math.radians(first_angle)) + origin.y
-        z_coordinate = 10 * math.sin(math.radians(second_angle)) + origin.z
-        # Ray goes from the origin in direction of end coordinates
-        self.ray = Ray(origin, Point(x_coordinate, y_coordinate, z_coordinate))
+    def __init__(self, origin: Point, theta: float, phi: float):
+        self.intensity = (abs(math.sin(abs(theta))) + abs(math.sin(abs(phi)))) / 2
+        x = math.sin(phi) * math.cos(theta)
+        y = math.sin(phi) * math.sin(theta)
+        z = math.cos(phi)
+        self.ray = Ray(origin, Point(x, -y, z))
         # Array used for storing segments of reflected ray
-        self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate, z_coordinate))]
+        self.ray_array = [Ray(origin, Point(x, -y, z))]
         self.road_intersection = []
+
+def print_ray_3d(ray: Ray):
+    point1 = ray.p1
+    x = round(float(point1.x), 2)
+    y = round(float(point1.y), 2)
+    z = round(float(point1.z), 2)
+    point2 = ray.p2
+    x2 = round(float(point2.x), 2)
+    y2 = round(float(point2.y), 2)
+    z2 = round(float(point2.z), 2)
+    print("X: ", x, "Y: ", y, " Z: ", z, "      -- X: ", x2, "        Y: ", y2, "       Z: ", z2)
+

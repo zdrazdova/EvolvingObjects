@@ -1,6 +1,7 @@
 import random
 from typing import List
 
+from numpy import arccos
 from sympy.geometry import Ray, Point, Segment
 from sympy import pi, sin, cos
 
@@ -16,8 +17,9 @@ class Component3D:
         self.origin = Point(0, 0, 0)
 
         # Sampling light rays for given base slope
-        self.original_rays = self.sample_rays_3d(number_of_rays, "random")
+        self.original_rays = self.sample_rays_3d(number_of_rays, ray_distribution)
 
+        self.road_intersections = []
         self.intersections_on = []
         self.intersections_on_intensity = 0
         self.no_of_reflections = 0
@@ -33,16 +35,26 @@ class Component3D:
         :return: List of rays from LED
         """
         ray_array = []
-        if distribution == "uniform":
-            step = 180 / number_of_rays
-        for ray in range(number_of_rays):
-            if distribution == "uniform":
-                angle = 180 + ray*step + step/2
-            else:
-                first_angle = random.randint(180, 360)
-                second_angle = random.randint(180, 360)
-            new_ray = MyRay3D(self.origin, first_angle, second_angle)
-            ray_array.append(new_ray)
+        for a in range(number_of_rays):
+            for b in range(number_of_rays):
+                if distribution == "uniform":
+                    theta = pi * 1/number_of_rays*a
+                    phi = pi * 1/number_of_rays*b
+
+                    u = 1/number_of_rays*a
+                    v = 1/number_of_rays*b
+                    phi = pi * u
+                    theta = arccos(2*v - 1)
+                else:
+                    u = random.random()
+                    v = random.random()
+                    phi = pi * u
+                    theta = arccos(2*v - 1)
+                    #theta = random.random()*pi
+                    #phi = random.random()*pi
+                print(float(theta), float(phi))
+                new_ray = MyRay3D(self.origin, phi, theta)
+                ray_array.append(new_ray)
         return ray_array
 
 

@@ -3,7 +3,7 @@ from sympy import Segment
 from sympy.geometry import Ray, Point
 
 from component import Component
-from component3D import Component3D
+from component_3d import Component3D
 from environment import Environment
 
 
@@ -15,10 +15,29 @@ def print_ray(ray: Ray):
     print("Ray ", "X: ", x1, "Y: ", y1, " - ", "X: ", x2, "Y: ", y2)
 
 
+def print_ray_3d(ray: Ray):
+    point1 = ray.p1
+    x = round(float(point1.x), 2)
+    y = round(float(point1.y), 2)
+    z = round(float(point1.z), 2)
+    point2 = ray.p2
+    x2 = round(float(point2.x), 2)
+    y2 = round(float(point2.y), 2)
+    z2 = round(float(point2.z), 2)
+    print("X: ", x, "Y: ", y, "Z: ", z, "-- X: ", x2, "Y: ", y2, "Z: ", z2)
+
+
 def print_point(point: Point):
     x = round(float(point.x), 2)
     y = round(float(point.y), 2)
     print("X: ", x, "Y: ", y)
+
+
+def print_point_3d(point: Point):
+    x = round(float(point.x), 2)
+    y = round(float(point.y), 2)
+    z = round(float(point.z), 2)
+    print("X: ", x, "Y: ", y, "Z: ", z)
 
 
 def print_point_array(points: [Point]):
@@ -176,18 +195,20 @@ def draw_road(ind: Component3D, name: str):
     svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
     # Generating drawing in SVG format
     with open(svg_name, "w") as f:
-        x_offset = 5000
-        y_offset = 5000
+        x_offset = 8000
+        z_offset = 4000
         color = "(250, 216, 22)"
-        f.write('<svg width="{0}" height="{1}">\n'.format(10000, 4000))
-        f.write('<rect width="{0}" height="{1}" fill="black"/>\n'.format(10000, 4000))
+        f.write('<svg width="{0}" height="{1}">\n'.format(16000, 8000))
+        f.write('<rect width="{0}" height="{1}" fill="black"/>\n'.format(16000, 8000))
         for ray in ind.original_rays:
             array = ray.ray_array
             alpha = str(round(ray.intensity, 3))
             color = "(250, 216, 22)"
-            print(ray.road_intersection)
-            x_int = abs(float(ray.road_intersection[0]))
-            y_int = abs(float(ray.road_intersection[1]))
-            f.write(f"<circle cx = \"{x_int}\" cy = \"{y_int}\" r = \"40\" style=\"fill:rgb{color};fill-opacity:{alpha};\" />")
+            if ray.road_intersection:
+                #print(float(ray.road_intersection[0]), float(ray.road_intersection[1]), float(ray.road_intersection[2]))
+                x_int = (float(ray.road_intersection[0]))
+                y_int = (float(ray.road_intersection[1]))
+                z_int = (float(ray.road_intersection[2]))
+                f.write(f"<circle cx = \"{x_int+x_offset}\" cy = \"{z_int+z_offset}\" r = \"40\" style=\"fill:rgb{color};fill-opacity:{alpha};\" />\n")
 
         f.write('</svg>')

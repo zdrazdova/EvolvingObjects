@@ -4,7 +4,7 @@ import math
 from sympy import Plane, Point
 
 from auxiliary import draw, log_stats_init, log_stats_append, draw_road
-from component3D import Component3D
+from component_3d import Component3D
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments
 from custom_geometry_3d import compute_intersections_3d
@@ -25,7 +25,7 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 
 def evaluate(individual: Component, env: Environment):
 
-    road = Plane(Point(0, -1000, 0), Point(1, -1000, 1), Point(4, -1000, 2) )
+    road = Plane(Point(0, -500, 0), Point(1, -500, 1), Point(4, -500, -4))
     road_intersections = compute_intersections_3d(individual.original_rays, road)
     print(len(road_intersections))
     return len(road_intersections)

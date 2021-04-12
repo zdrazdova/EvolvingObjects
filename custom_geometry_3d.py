@@ -4,7 +4,7 @@ from typing import List, Tuple
 from sympy import Rational, sin, cos, Plane
 from sympy.geometry import Ray, Point, Segment
 
-from auxiliary import print_ray
+from auxiliary import print_ray, print_point_3d
 from component import Component
 from custom_ray import MyRay
 from custom_ray_3d import MyRay3D
@@ -25,10 +25,13 @@ def compute_intersections_3d(rays: List[MyRay3D], road: Plane) -> List[Tuple[Rat
     for ray in rays:
         inter_point = road.intersection(ray.ray_array[-1])
         if inter_point:
+            print_point_3d(inter_point[0])
             intensity = ray.intensity
             inter_array.append((inter_point[0].x, inter_point[0].y, intensity))
-            ray.road_intersection = (inter_point[0].x, inter_point[0].y)
+            ray.road_intersection = (inter_point[0].x, inter_point[0].y, inter_point[0].z)
     return inter_array
+
+
 
 
 def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_factor: float) -> (Ray, float):
