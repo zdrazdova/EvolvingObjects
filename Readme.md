@@ -79,8 +79,8 @@ There are examples for each criterion:
 - first attempts with 3D model
 
 
-<img src="stats/random.svg" alt="drawing" width="600"/>
-<img src="stats/random2.svg" alt="drawing" width="600"/>
-<img src="stats/uniform.svg" alt="drawing" width="600"/>
+<img src="stats/random.png" alt="drawing" width="600"/>
+<img src="stats/random2.png" alt="drawing" width="600"/>
+<img src="stats/uniform.png" alt="drawing" width="600"/>
 
 
