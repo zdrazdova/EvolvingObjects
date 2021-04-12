@@ -3,7 +3,7 @@ from typing import List
 
 from numpy import arccos
 from sympy.geometry import Ray, Point, Segment
-from sympy import pi, sin, cos
+from sympy import pi, sin, cos, Plane
 
 from custom_ray import MyRay
 from custom_ray_3d import MyRay3D
@@ -12,12 +12,14 @@ from environment import Environment
 
 class Component3D:
 
-    def __init__(self, number_of_rays: int, ray_distribution: str):
+    def __init__(self, number_of_rays: int, ray_distribution: str,  base_length: int, base_width: int):
 
         self.origin = Point(0, 0, 0)
 
         # Sampling light rays for given base slope
         self.original_rays = self.sample_rays_3d(number_of_rays, ray_distribution)
+
+        self.reflective_segments = generate_reflective_segments(1, base_length, base_width)
 
         self.road_intersections = []
         self.intersections_on = []
@@ -52,22 +54,18 @@ class Component3D:
                     theta = arccos(2*v - 1)
                     #theta = random.random()*pi
                     #phi = random.random()*pi
-                print(float(theta), float(phi))
+                #print(float(theta), float(phi))
                 new_ray = MyRay3D(self.origin, phi, theta)
                 ray_array.append(new_ray)
         return ray_array
 
 
-def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int):
+def generate_reflective_segments(number_of_segments: int, base_length: int, base_width: int):
     reflective_segments = []
-    for index in range(number_of_segments):
-        origin = Point(random.randint(-distance_limit, distance_limit), random.randint(-distance_limit, distance_limit))
-        end = Point(origin.x+random.randint(-length_limit, length_limit),
-                    origin.y+random.randint(-length_limit, length_limit))
-        segment = Segment(origin, end)
-
-        reflective_segments.append(segment)
+    reflective_plane = Plane(Point(10, 0, base_length / 2),
+                             Point(10, 0, -base_length / 2),
+                             Point(10, 10, -base_length / 2)
+                             )
+    reflective_segments.append(reflective_plane)
     return reflective_segments
-
-
 

@@ -7,7 +7,7 @@ from auxiliary import draw, log_stats_init, log_stats_append, draw_road
 from component_3d import Component3D
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments
-from custom_geometry_3d import compute_intersections_3d
+from custom_geometry_3d import compute_intersections_3d, compute_reflections_multiple_planes
 from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
@@ -26,6 +26,9 @@ from quality_precalculations import compute_segments_intensity, compute_proporti
 def evaluate(individual: Component, env: Environment):
 
     road = Plane(Point(0, -500, 0), Point(1, -500, 1), Point(4, -500, -4))
+    road_intersections = compute_intersections_3d(individual.original_rays, road)
+    print(len(road_intersections))
+    compute_reflections_multiple_planes(individual)
     road_intersections = compute_intersections_3d(individual.original_rays, road)
     print(len(road_intersections))
     return len(road_intersections)
@@ -59,7 +62,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     creator.create("Individual", Component3D, fitness=creator.Fitness)
     toolbox = base.Toolbox()
     toolbox.register("individual", creator.Individual, number_of_rays=number_of_rays,
-                     ray_distribution=ray_distribution)
+                     ray_distribution=ray_distribution, base_length=env.road_length, base_width=env.road_width)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("select", tools.selTournament, tournsize=2)
 
@@ -163,13 +166,16 @@ def main():
     # create config parser
     builder = ConfigBuilder()
     # parse configuration from file parameters.json
-    config = builder.parse_config('parameters.json')
+    config = builder.parse_config('parameters_3d.json')
 
     # Load parameters for environment
+    dimensions = config.dimensions
     base_length = config.lamp.base_length
-    base_slope = config.lamp.base_angle
+    base_width = config.lamp.base_width
+    base_slope = config.lamp.base_slope
     road_start = config.road.start
     road_end = config.road.end
+    road_width = config.road.width
     road_depth = config.road.depth
     road_sections = config.road.sections
     configuration = config.lamp.configuration
@@ -180,11 +186,12 @@ def main():
     reflective_factor = config.evaluation.reflective_factor
 
     # Init environment
-    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
+    env = Environment(dimensions, base_length, base_width, base_slope,
+                      road_start, road_end, road_width, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration)
 
     # Load parameters for LED
-    number_of_rays = config.lamp.number_of_rays
+    sqrt_of_number_of_rays = config.lamp.sqrt_of_number_of_rays
     ray_distribution = config.lamp.ray_distribution
 
     # Load limits for two connected reflective surfaces
@@ -213,7 +220,7 @@ def main():
 
 
     # Run evolution algorithm
-    evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
+    evolution(env, sqrt_of_number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
               length_lower_bound, length_upper_bound, no_of_reflective_segments, distance_limit, length_limit,
               population_size, number_of_generations, xover_prob, angle_mut_prob, length_mut_prob,
               shift_segment_prob, rotate_segment_prob, resize_segment_prob)

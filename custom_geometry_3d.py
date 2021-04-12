@@ -7,7 +7,7 @@ from sympy.geometry import Ray, Point, Segment
 from auxiliary import print_ray, print_point_3d
 from component import Component
 from custom_ray import MyRay
-from custom_ray_3d import MyRay3D
+from custom_ray_3d import MyRay3D, print_ray_3d
 
 
 def compute_intersections_3d(rays: List[MyRay3D], road: Plane) -> List[Tuple[Rational, float]]:
@@ -25,13 +25,40 @@ def compute_intersections_3d(rays: List[MyRay3D], road: Plane) -> List[Tuple[Rat
     for ray in rays:
         inter_point = road.intersection(ray.ray_array[-1])
         if inter_point:
-            print_point_3d(inter_point[0])
+            #print_point_3d(inter_point[0])
             intensity = ray.intensity
             inter_array.append((inter_point[0].x, inter_point[0].y, intensity))
             ray.road_intersection = (inter_point[0].x, inter_point[0].y, inter_point[0].z)
     return inter_array
 
 
+def compute_reflections_multiple_planes(ind: Component):
+    no_of_reflections = 0
+    plane = ind.reflective_segments[0]
+    for ray in ind.original_rays:
+        intersection = plane.intersection(ray.ray)
+        if intersection:
+            print_point_3d(intersection[0])
+            reflection = compute_reflection_plane(plane, ray.ray)
+            print_ray_3d(reflection)
+            ray.ray_array = [Ray(ray.ray.p1, intersection[0]), reflection]
+
+
+def compute_reflection_plane(plane: Plane, ray: Ray) -> Ray:
+    all_intersections = ray.intersection(plane)
+    if len(all_intersections) != 1:
+        return None
+    intersection = all_intersections[0]
+    orig_point = ray.p1
+    parallel = plane.parallel_plane(orig_point)
+    perpendicular = plane.perpendicular_line(intersection)
+    meet_point = parallel.intersection(perpendicular)[0]
+    x_diff = (meet_point.x - orig_point.x)
+    y_diff = (meet_point.y - orig_point.y)
+    new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
+    new_point = Point(orig_point.x, intersection.y + (intersection.y -orig_point.y), intersection.z + (intersection.z - orig_point.z))
+    reflected_ray = Ray(intersection, new_point)
+    return reflected_ray
 
 
 def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_factor: float) -> (Ray, float):
