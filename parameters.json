@@ -1,6 +1,6 @@
 {
     "lamp": {
-        "number_of_rays": 20,
+        "number_of_rays": 8,
 	    "ray_distribution": "uniform",
         "base_length": 200,
         "base_angle": 60,
@@ -24,7 +24,7 @@
 	    "sections": 3
     },
     "evolution": {
-        "population_size": 10,
+        "population_size": 4,
         "number_of_generations": 50,
         "operators": {
             "mutation": {

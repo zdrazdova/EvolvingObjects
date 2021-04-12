@@ -1,7 +1,9 @@
+from geometer import Polygon
 from sympy import Segment
 from sympy.geometry import Ray, Point
 
 from component import Component
+from component3D import Component3D
 from environment import Environment
 
 
@@ -168,3 +170,24 @@ def boundary_intersection(left: Segment, right: Segment, bottom: Segment, top: S
     intersection = top.intersection(shifted_ray)
     if intersection:
         return float(intersection[0].x), float(intersection[0].y)
+
+
+def draw_road(ind: Component3D, name: str):
+    svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
+    # Generating drawing in SVG format
+    with open(svg_name, "w") as f:
+        x_offset = 5000
+        y_offset = 5000
+        color = "(250, 216, 22)"
+        f.write('<svg width="{0}" height="{1}">\n'.format(10000, 4000))
+        f.write('<rect width="{0}" height="{1}" fill="black"/>\n'.format(10000, 4000))
+        for ray in ind.original_rays:
+            array = ray.ray_array
+            alpha = str(round(ray.intensity, 3))
+            color = "(250, 216, 22)"
+            print(ray.road_intersection)
+            x_int = abs(float(ray.road_intersection[0]))
+            y_int = abs(float(ray.road_intersection[1]))
+            f.write(f"<circle cx = \"{x_int}\" cy = \"{y_int}\" r = \"40\" style=\"fill:rgb{color};fill-opacity:{alpha};\" />")
+
+        f.write('</svg>')
