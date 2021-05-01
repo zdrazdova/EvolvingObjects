@@ -22,6 +22,7 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
     """
     inter_array = []
     for ray in rays:
+        ray.road_intersection = []
         inter_point = road.intersection(ray.ray_array[-1])
         if inter_point:
             intensity = ray.intensity
@@ -56,6 +57,7 @@ def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
     reflected_ray = Ray(intersection, new_point)
     ray_intensity = intensity * reflective_factor
+    #print(intensity, ray_intensity)
     return reflected_ray, ray_intensity
 
 
@@ -150,6 +152,7 @@ def compute_reflections_two_segments(ind: Component, r_factor: float):
                 compute_reflection_segment(ray.ray_array, ind.left_segment, previous_i_l, ray_intensity, r_factor)
             if continue_right:
                 no_of_reflections += 1
+        ray.intensity = ray_intensity
     ind.no_of_reflections = no_of_reflections
 
 

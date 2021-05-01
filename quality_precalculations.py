@@ -16,6 +16,24 @@ def intensity_of_intersections(road_intersections: List[Tuple[Rational, float]])
     return sum([y for x, y in road_intersections])
 
 
+def intensity_of_obtrusive_light(rays: List[MyRay]) -> float:
+    intensity_sum = 0
+    for ray in rays:
+        if ray.road_intersection == []:
+            intensity_sum += ray.intensity
+    return intensity_sum
+
+
+def sum_original_intensity(rays: List[MyRay]) -> float:
+    """
+    Compute sum of intensity of all rays form LED
+
+    :param rays: All rays from LED
+    :return: Sum of intensity of all rays form the LED
+    """
+    return sum([ray.original_intensity for ray in rays])
+
+
 def sum_intensity(rays: List[MyRay]) -> float:
     """
     Compute sum of intensity of all rays form LED

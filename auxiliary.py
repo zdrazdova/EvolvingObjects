@@ -1,3 +1,5 @@
+import math
+
 from geometer import Polygon
 from sympy import Segment
 from sympy.geometry import Ray, Point
@@ -72,6 +74,9 @@ def draw(ind: Component, name: str, env: Environment):
         if env.road_start < 0:
             x_offset += abs(env.road_start)
         y_offset = 1000
+        width = env.road_end + x_offset + 1000
+        height = abs(env.road_depth) + 2000
+        diag = math.sqrt(width*width + height*height)
         f.write(
             '<svg width="{0}" height="{1}">'.format(env.road_end + x_offset + 1000, abs(env.road_depth) + 2000))
         f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(env.road_end + x_offset + 1000,
@@ -108,8 +113,13 @@ def draw(ind: Component, name: str, env: Environment):
                                 float(intersection.x) + x_offset, - float(intersection.y) + y_offset, color, alpha))
             else:
                 x_end, y_end = boundary_intersection(left, right, bottom, top, r)
-                x_diff = float(r.points[1].x - r.points[0].x) * 50
-                y_diff = float(r.points[1].y - r.points[0].y) * 50
+
+                x_diff = float(r.points[1].x - r.points[0].x)
+                y_diff = float(r.points[1].y - r.points[0].y)
+                length = math.sqrt(x_diff * x_diff + y_diff * y_diff)
+                ratio = diag /length
+                x_diff = float(r.points[1].x - r.points[0].x) * ratio
+                y_diff = float(r.points[1].y - r.points[0].y) * ratio
                 f.write(
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
                     '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
@@ -135,18 +145,18 @@ def draw(ind: Component, name: str, env: Environment):
                 left_border += segments_size
 
         # Base
-        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:2"/>'.format(
             ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
             ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset))
 
         if env.configuration == "two connected":
             # right segment
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:2"/>'.format(
                 ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset,
                 float(ind.right_segment.p2.x) + x_offset, float(-ind.right_segment.p2.y) + y_offset))
 
             # left segment
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:2"/>'.format(
                 ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
                 float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
         if env.configuration == "multiple free":

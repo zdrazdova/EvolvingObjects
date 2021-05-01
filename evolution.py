@@ -6,7 +6,7 @@ from custom_geometry import compute_intersections, compute_reflections_two_segme
     compute_reflection_multiple_segments
 from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment
-from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
+from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution, obtrusive_light
 
 from deap import base
 from deap import creator
@@ -24,13 +24,13 @@ def evaluate(individual: Component, env: Environment):
         compute_reflections_two_segments(individual, env.reflective_factor)
     if env.configuration == "multiple free":
         compute_reflection_multiple_segments(individual)
-    if env.quality_criterion == "light pollution":
-        return light_pollution(individual.original_rays)
+    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
+    if env.quality_criterion == "obtrusive light":
+        return obtrusive_light(individual.original_rays)
     if env.quality_criterion == "glare reduction":
         return glare_reduction(individual)
-    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
     if env.quality_criterion == "efficiency":
-        return efficiency(road_intersections, individual.original_rays)
+        return efficiency(individual.original_rays)
     if env.quality_criterion == "illuminance uniformity":
         segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
         individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)

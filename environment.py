@@ -4,9 +4,10 @@ from sympy import Point, Segment, Polygon, Plane
 
 
 class Environment:
-    def __init__(self, dimensions: int, base_length: int, base_width: int, base_slope: int,
-                 road_start: int, road_end: int, road_width: int, road_depth: int, road_sections: int,
+    def __init__(self, base_length: int, base_slope: int,
+                 road_start: int, road_end: int, road_depth: int, road_sections: int,
                  criterion: str, cosine_error: str, reflective_factor: float, configuration: str):
+        dimensions = 2
         self.origin = Point(0, 0)
         self.base_slope = base_slope
 
@@ -32,7 +33,7 @@ class Environment:
         self.road_start = road_start
         self.road_end = road_end
         self.road_length = (self.road_end - self.road_start)
-        self.road_width = road_width
+        #self.road_width = road_width
         self.road_depth = road_depth
         self.road_sections = road_sections
 

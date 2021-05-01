@@ -4,10 +4,11 @@ from sympy import Rational, Segment
 
 from component import Component
 from custom_ray import MyRay
-from quality_precalculations import intensity_of_intersections, sum_intensity, rays_upwards
+from quality_precalculations import intensity_of_intersections, sum_intensity, rays_upwards, sum_original_intensity, \
+    intensity_of_obtrusive_light
 
 
-def efficiency(road_intersections: List[Tuple[Rational, float]], all_rays: List[MyRay]) -> float:
+def efficiency(all_rays: List[MyRay]) -> float:
     """
     Compute efficiency of component from the amount of rays intersecting the road and their intensity.
 
@@ -15,9 +16,9 @@ def efficiency(road_intersections: List[Tuple[Rational, float]], all_rays: List[
     :param all_rays: List of all rays from LED
     :return: fraction of intensity of rays on the road to the total intensity of all ray from LED
     """
-    intensity_on_road = intensity_of_intersections(road_intersections)
-    total_intensity = sum_intensity(all_rays)
-    return intensity_on_road/total_intensity
+    total_intensity = sum_original_intensity(all_rays)
+    intensity_from_device = sum_intensity(all_rays)
+    return intensity_from_device/total_intensity
 
 
 def illuminance_uniformity(segments_intensity: List[float]) -> float:
@@ -51,4 +52,7 @@ def light_pollution(individual_rays: List[List[Segment]]) -> int:
     :param individual_rays:
     :return: The amount of rays that are misdirected
     """
-    return rays_upwards([ray.ray_array for ray in individual_rays])
+    #return rays_upwards([ray.ray_array for ray in individual_rays])
+
+def obtrusive_light(all_rays: List[MyRay]) -> float:
+    return -intensity_of_obtrusive_light(all_rays)/sum_intensity(all_rays)

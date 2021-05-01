@@ -9,6 +9,7 @@ class MyRay:
         self.ray_length = 1
         # Intensity is calculated according to Lambertian distribution
         self.intensity = abs(math.sin(math.radians(abs(ray_angle - base_angle))))
+        self.original_intensity = abs(math.sin(math.radians(abs(ray_angle - base_angle))))
         self.end_intensity = self.intensity * 1 / (self.ray_length * self.ray_length)
         # End coordinates are calculated from ray angle
         x_coordinate = 10000 * math.cos(math.radians(ray_angle)) + origin.x

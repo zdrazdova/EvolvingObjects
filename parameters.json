@@ -2,9 +2,9 @@
     "lamp": {
         "number_of_rays": 20,
 	    "ray_distribution": "uniform",
-        "base_length": 200,
+        "base_length": 4,
         "base_angle": 60,
-	    "configuration": "multiple free",
+	    "configuration": "two connected",
 	    "two_connected": {
 	        "angle_lower_bound": 90,
             "angle_upper_bound": 180,
@@ -18,13 +18,13 @@
         }
     },
     "road": {
-        "start": -12000,
-        "end": 12000, 
-	    "depth": -8000,
-	    "sections": 3
+        "start": 0,
+        "end": 15000, 
+	    "depth": -6000,
+	    "sections": 6
     },
     "evolution": {
-        "population_size": 1,
+        "population_size": 10,
         "number_of_generations": 50,
         "operators": {
             "mutation": {
@@ -41,7 +41,7 @@
 	    "reflective_factor" : 0.98,
 	    "inverse_square_law": "No",
 	    "cosine_error": "No",
-        "criterion": "illuminance uniformity"
+        "criterion": "obtrusive light"
     }
 }
 
