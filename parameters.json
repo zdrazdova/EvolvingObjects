@@ -1,7 +1,10 @@
 {
     "lamp": {
+	"number_of_LEDs": 1,
+	"separating_distance": 2.4,
+	"optics": "identical-mirrored",
         "number_of_rays": 20,
-	    "ray_distribution": "uniform",
+	"ray_distribution": "uniform",
         "base_length": 4,
         "base_angle": 60,
 	    "configuration": "two connected",
@@ -21,7 +24,7 @@
         "start": 0,
         "end": 15000, 
 	    "depth": -6000,
-	    "sections": 6
+	    "sections": 4
     },
     "evolution": {
         "population_size": 10,
@@ -41,7 +44,7 @@
 	    "reflective_factor" : 0.98,
 	    "inverse_square_law": "No",
 	    "cosine_error": "No",
-        "criterion": "obtrusive light"
+        "criterion": "illuminance uniformity"
     }
 }
 

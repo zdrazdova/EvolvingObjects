@@ -34,6 +34,16 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
     return inter_array
 
 
+def recalculate_intersections(intersections: List[Tuple[Rational, float]], shift: int) -> List[Tuple[Rational, float]]:
+    recalculated = []
+    for i in intersections:
+        recalculated.append(i)
+        new_x = i[0] * -1 -shift
+        new_intersection = (new_x, i[1])
+        recalculated.append(new_intersection)
+    return recalculated
+
+
 def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_factor: float) -> (Ray, float):
     """
     Compute reflection of ray from given surface. Intensity of ray is multiplied by reflective factor of the surface.

@@ -68,6 +68,7 @@ def compute_segments_intensity(intersections_on: List[Tuple[Rational, float]], r
             stay = False
             if left_border <= intersections[counter][0] < right_border:
                 segments_intensity[segment] += intersections[counter][1]
+                #segments_intensity[segment] += 1
                 counter += 1
                 stay = True
     return segments_intensity

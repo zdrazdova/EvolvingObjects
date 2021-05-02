@@ -6,7 +6,8 @@ from sympy import Point, Segment, Polygon, Plane
 class Environment:
     def __init__(self, base_length: int, base_slope: int,
                  road_start: int, road_end: int, road_depth: int, road_sections: int,
-                 criterion: str, cosine_error: str, reflective_factor: float, configuration: str):
+                 criterion: str, cosine_error: str, reflective_factor: float, configuration: str,
+                 number_of_led: int, separating_distance: float):
         dimensions = 2
         self.origin = Point(0, 0)
         self.base_slope = base_slope
@@ -41,3 +42,6 @@ class Environment:
         self.cosine_error = cosine_error
         self.quality_criterion = criterion
         self.configuration = configuration
+
+        self.number_of_led = number_of_led
+        self.separating_distance = separating_distance
