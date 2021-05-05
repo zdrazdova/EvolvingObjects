@@ -4,7 +4,6 @@ from typing import List, Tuple
 from sympy import Rational, sin, cos
 from sympy.geometry import Ray, Point, Segment
 
-from auxiliary import print_ray
 from component import Component
 from custom_ray import MyRay
 
@@ -95,7 +94,7 @@ def compute_reflection_segment(ray_array, segment, previous_intersection, ray_in
     return False, ray_array, previous_intersection, ray_intensity
 
 
-def compute_reflection_segment_simple(ray_array, segment):
+def compute_reflection_segment_simple(ray_array, segment, ray_intensity, r_factor):
     """
     Compute reflection of last part of the ray from given segment. If there is an intersection of ray and segment,
     compute reflected ray, update ray intensity, update ray array. If there is not, return False and original values.
@@ -110,28 +109,30 @@ def compute_reflection_segment_simple(ray_array, segment):
     last_ray = ray_array[-1]
     intersection = segment.intersection(last_ray)
     if intersection:
-        reflected_ray, ray_intensity = compute_reflection(last_ray, segment, 1, 1)
+        reflected_ray, ray_intensity = compute_reflection(last_ray, segment, ray_intensity, r_factor)
         new_ray_array = ray_array[:-1]
         new_ray_array.append(Ray(last_ray.p1, intersection[0]))
         new_ray_array.append(reflected_ray)
         ray_array = new_ray_array
-    return ray_array
+    return ray_array, ray_intensity
 
 
-def compute_reflection_multiple_segments(ind: Component):
+def compute_reflection_multiple_segments(ind: Component, r_factor: float):
     no_of_reflection = 0
     for ray in ind.original_rays:
+        ray_intensity = ray.intensity
         ray.ray_array = [ray.ray]
         last_reflection = ind.base
         reflection_exists = True
         while reflection_exists:
             segment = closest_segment(ind.reflective_segments+[ind.base], ray.ray_array[-1], last_reflection)
             if len(segment) == 1:
-                ray.ray_array = compute_reflection_segment_simple(ray.ray_array, segment[0])
+                ray.ray_array, ray_intensity = compute_reflection_segment_simple(ray.ray_array, segment[0], ray_intensity, r_factor)
                 last_reflection = segment[0]
                 no_of_reflection += 1
             else:
                 reflection_exists = False
+        ray.intensity = ray_intensity
     ind.no_of_reflections = no_of_reflection
 
 

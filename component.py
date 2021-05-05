@@ -111,7 +111,7 @@ class Component:
 def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int):
     reflective_segments = []
     for index in range(number_of_segments):
-        origin = Point(random.randint(-distance_limit, distance_limit), random.randint(-distance_limit, distance_limit))
+        origin = Point(random.randint(-distance_limit, distance_limit), random.randint(0, distance_limit))
         end = Point(origin.x+random.randint(-length_limit, length_limit),
                     origin.y+random.randint(-length_limit, length_limit))
         segment = Segment(origin, end)

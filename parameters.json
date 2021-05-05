@@ -5,7 +5,7 @@
 	"optics": "identical-mirrored",
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
-        "base_length": 4,
+        "base_length": 40,
         "base_angle": 60,
 	    "configuration": "two connected",
 	    "two_connected": {
@@ -15,19 +15,19 @@
             "length_upper_bound": 3
         },
         "multiple_free": {
-            "no_of_reflective_segments": 4,
+            "no_of_reflective_segments": 8,
             "distance_limit": 500,
             "length_limit": 400
         }
     },
     "road": {
         "start": 0,
-        "end": 15000, 
-	    "depth": -6000,
+        "end": 12000, 
+	    "depth": -4000,
 	    "sections": 4
     },
     "evolution": {
-        "population_size": 10,
+        "population_size": 8,
         "number_of_generations": 50,
         "operators": {
             "mutation": {
@@ -37,14 +37,14 @@
                 "segment_rotation_prob": 0.2,
                 "segment_resizing_prob": 0.4
             },
-            "xover_prob": 0
+            "xover_prob": 0.4
         }
     },
     "evaluation": {
 	    "reflective_factor" : 0.98,
 	    "inverse_square_law": "No",
 	    "cosine_error": "No",
-        "criterion": "illuminance uniformity"
+        "criterion": "obtrusive light"
     }
 }
 

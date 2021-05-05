@@ -45,6 +45,16 @@ def resize_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
     return modified_segments
 
 
+def x_over_multiple_segments(ind1: Component, ind2: Component) -> (Component, Component):
+    length = len(ind1.reflective_segments)
+    x_over_point = random.randint(1, length-1)
+    new_list_1 = ind1.reflective_segments[:x_over_point] + ind2.reflective_segments[x_over_point:]
+    new_list_2 = ind2.reflective_segments[:x_over_point] + ind1.reflective_segments[x_over_point:]
+    ind1.reflective_segments = new_list_1
+    ind2.reflective_segments = new_list_2
+    return ind1, ind2
+
+
 def mutate_length(individual: Component, length_upper_bound: int, length_lower_bound: int) -> Component:
     individual.left_length_coef += random.uniform(-0.1, 0.1)
     individual.right_length_coef += random.uniform(-0.1, 0.1)
@@ -65,7 +75,7 @@ def mutate_angle(individual: Component) -> Component:
     return individual
 
 
-def mate(ind1: Component, ind2: Component) -> (Component, Component):
+def x_over_two_segments(ind1: Component, ind2: Component) -> (Component, Component):
     dummy_angle = ind1.right_angle
     ind1.right_angle = ind2.right_angle
     ind2.right_angle = dummy_angle

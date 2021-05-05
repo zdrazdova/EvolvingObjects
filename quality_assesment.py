@@ -32,7 +32,7 @@ def illuminance_uniformity(segments_intensity: List[float]) -> float:
     max_illuminance = max(segments_intensity)
     if max_illuminance == 0:
         return 0
-    return -min_illuminance/max_illuminance
+    return min_illuminance/max_illuminance
 
 
 def glare_reduction(individual: Component) -> int:
@@ -55,4 +55,4 @@ def light_pollution(individual_rays: List[List[Segment]]) -> int:
     #return rays_upwards([ray.ray_array for ray in individual_rays])
 
 def obtrusive_light(all_rays: List[MyRay]) -> float:
-    return intensity_of_obtrusive_light(all_rays)/sum_intensity(all_rays)
+    return -intensity_of_obtrusive_light(all_rays)/sum_intensity(all_rays)

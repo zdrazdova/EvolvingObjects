@@ -4,8 +4,8 @@ import math
 from auxiliary import draw, log_stats_init, log_stats_append
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments, recalculate_intersections
-from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
-    resize_one_segment
+from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
+    resize_one_segment, x_over_multiple_segments, x_over_two_segments
 from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution, obtrusive_light
 
 from deap import base
@@ -23,7 +23,7 @@ def evaluate(individual: Component, env: Environment):
     if env.configuration == "two connected":
         compute_reflections_two_segments(individual, env.reflective_factor)
     if env.configuration == "multiple free":
-        compute_reflection_multiple_segments(individual)
+        compute_reflection_multiple_segments(individual, env.reflective_factor)
     road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
     if env.quality_criterion == "obtrusive light":
         return obtrusive_light(individual.original_rays)
@@ -31,11 +31,11 @@ def evaluate(individual: Component, env: Environment):
         return glare_reduction(individual)
     if env.quality_criterion == "efficiency":
         return efficiency(individual.original_rays)
+    if env.number_of_led == 2:
+        road_intersections = recalculate_intersections(road_intersections, 24)
+    segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
+    individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
-        if env.number_of_led == 2:
-            road_intersections = recalculate_intersections(road_intersections, 24)
-        segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
-        individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
         return illuminance_uniformity(segments_intensity)
     return efficiency(individual)
 
@@ -79,6 +79,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
     # Initiating elitism
     hof = HallOfFame(1)
+    hof.update(pop)
 
     print("Start of evolution")
 
@@ -93,13 +94,21 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         offspring = list(map(toolbox.clone, offspring))
 
         # Apply crossover and mutation on the offspring
+
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
             # cross two individuals with probability xover_prob
-            if random.random() < xover_prob:
-                mate(child1, child2)
-                # fitness values of the children must be recalculated later
-                child1.fitness = 0
-                child2.fitness = 0
+            if env.configuration == "multiple free":
+                if random.random() < xover_prob:
+                    x_over_multiple_segments(child1, child2)
+                    # fitness values of the children must be recalculated later
+                    child1.fitness = 0
+                    child2.fitness = 0
+            if env.configuration == "two connected":
+                if random.random() < xover_prob:
+                    x_over_two_segments(child1, child2)
+                    # fitness values of the children must be recalculated later
+                    child1.fitness = 0
+                    child2.fitness = 0
 
         for mutant in offspring:
             if env.configuration == "multiple free":
@@ -115,7 +124,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                 if random.random() < resize_segment_prob:
                     mutant.reflective_segments = resize_one_segment(mutant.reflective_segments)
                     mutant.fitness = 0
-
 
             if env.configuration == "two connected":
                 if random.random() < mut_angle_prob:
@@ -136,9 +144,9 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
         pop[:] = offspring
+
         hof.update(pop)
 
-        # best_ind = tools.selBest(pop, 1)[0]
         best_ind = hof[0]
 
         fitnesses = []
