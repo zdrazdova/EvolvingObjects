@@ -18,7 +18,7 @@ def efficiency(all_rays: List[MyRay]) -> float:
     """
     total_intensity = sum_original_intensity(all_rays)
     intensity_from_device = sum_intensity(all_rays)
-    return intensity_from_device/total_intensity
+    return (intensity_from_device/total_intensity)
 
 
 def illuminance_uniformity(segments_intensity: List[float]) -> float:
@@ -52,7 +52,7 @@ def light_pollution(individual_rays: List[List[Segment]]) -> int:
     :param individual_rays:
     :return: The amount of rays that are misdirected
     """
-    #return rays_upwards([ray.ray_array for ray in individual_rays])
+    return rays_upwards([ray.ray_array for ray in individual_rays])
 
 def obtrusive_light(all_rays: List[MyRay]) -> float:
-    return -intensity_of_obtrusive_light(all_rays)/sum_intensity(all_rays)
+    return 1-(intensity_of_obtrusive_light(all_rays)/sum_intensity(all_rays))

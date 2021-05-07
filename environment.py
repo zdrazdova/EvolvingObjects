@@ -11,6 +11,7 @@ class Environment:
         dimensions = 2
         self.origin = Point(0, 0)
         self.base_slope = base_slope
+        self.base_length = base_length
 
         if dimensions == 2:
             # Calculating base coordinates from slope and length parameters

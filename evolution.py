@@ -1,5 +1,5 @@
 import random
-import math
+from math import factorial
 
 from auxiliary import draw, log_stats_init, log_stats_append
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
@@ -37,6 +37,12 @@ def evaluate(individual: Component, env: Environment):
     individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
         return illuminance_uniformity(segments_intensity)
+    if env.quality_criterion == "all":
+        individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
+                                    obtrusive_light(individual.original_rays), 2*light_pollution(individual.original_rays)]
+        weights = [1, 10, 4, -1]
+        product = [x * y for x, y in zip(individual.fitness_array, weights)]
+        return sum(product)
     return efficiency(individual)
 
 
@@ -46,7 +52,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               population_size: int, number_of_generations: int,
               xover_prob: float, mut_angle_prob: float, mut_length_prob: float,
               shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
-
+    NOBJ = 3
+    P = 4
+    H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
+    MU = int(H + (4 - H % 4))
+    ref_points = tools.uniform_reference_points(NOBJ, P)
     # Initiating evolutionary algorithm
     creator.create("Fitness", base.Fitness, weights=(1.0,))
     creator.create("Individual", Component, fitness=creator.Fitness)
@@ -57,7 +67,9 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                      length_upper_bound=length_upper_bound, no_of_reflective_segments=no_of_reflective_segments,
                      distance_limit=distance_limit, length_limit=length_limit)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    toolbox.register("evaluate", evaluate)
     toolbox.register("select", tools.selTournament, tournsize=2)
+    #toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
     # Initiating first population
     pop = toolbox.population(n=population_size)
@@ -90,6 +102,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
+        #offspring = pop[:]
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
@@ -144,6 +157,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
         pop[:] = offspring
+        #pop = toolbox.select(pop + offspring, MU)
 
         hof.update(pop)
 
@@ -154,7 +168,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
             fitnesses.append(evaluate(item, env))
         print(fitnesses)
 
-        stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}"
+        stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
+                     f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
+                     f"left_length: {best_ind.left_length_coef*env.base_length}, " \
+                     f"right angle: {best_ind.right_angle-env.base_slope}, " \
+                     f"left_length: {best_ind.right_length_coef*env.base_length} "
         log_stats_append(f"stats", stats_line)
         print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)

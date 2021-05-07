@@ -55,7 +55,7 @@ def print_point_array(points: [Point]):
 def log_stats_init(name: str, line: str):
     stats_name = "stats/log-" + str(name) + ".csv"
     with open(stats_name, "w") as f:
-        f.write(f"generation, best fitness, average fitness \n")
+        f.write(f"generation, best fitness, average fitness, fitness array, left segment angle, left segment length, right segment angle, right segment length  \n")
         f.write(line)
 
 
@@ -139,7 +139,7 @@ def draw(ind: Component, name: str, env: Environment):
                 .format(env.road.p1.x + x_offset, -env.road.p1.y + y_offset,
                         (env.road.p2.x - env.road.p1.x)))  # road
 
-        if env.quality_criterion == "illuminance uniformity":
+        if env.quality_criterion == "illuminance uniformity" or env.quality_criterion == "all":
             left_border = env.road_start
             segments_size = env.road_length / env.road_sections
 

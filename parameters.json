@@ -1,13 +1,13 @@
 {
     "lamp": {
-	"number_of_LEDs": 1,
-	"separating_distance": 2.4,
+	"number_of_LEDs": 2,
+	"separating_distance": 24,
 	"optics": "identical-mirrored",
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
-        "base_length": 40,
+        "base_length": 4,
         "base_angle": 60,
-	    "configuration": "two connected",
+	    "configuration": "multiple free",
 	    "two_connected": {
 	        "angle_lower_bound": 90,
             "angle_upper_bound": 180,
@@ -21,14 +21,14 @@
         }
     },
     "road": {
-        "start": 0,
-        "end": 12000, 
-	    "depth": -4000,
-	    "sections": 4
+        "start": -15000,
+        "end": 15000, 
+	    "depth": -6000,
+	    "sections": 9
     },
     "evolution": {
-        "population_size": 8,
-        "number_of_generations": 50,
+        "population_size": 16,
+        "number_of_generations": 64,
         "operators": {
             "mutation": {
                 "angle_mutation_prob": 0.4,
@@ -37,14 +37,14 @@
                 "segment_rotation_prob": 0.2,
                 "segment_resizing_prob": 0.4
             },
-            "xover_prob": 0.4
+            "xover_prob": 0
         }
     },
     "evaluation": {
 	    "reflective_factor" : 0.98,
 	    "inverse_square_law": "No",
 	    "cosine_error": "No",
-        "criterion": "obtrusive light"
+        "criterion": "all"
     }
 }
 
