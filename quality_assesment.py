@@ -35,16 +35,6 @@ def illuminance_uniformity(segments_intensity: List[float]) -> float:
     return min_illuminance/max_illuminance
 
 
-def glare_reduction(individual: Component) -> int:
-    """
-    Compute glare reduction that is a result of using Component
-
-    :param individual: Component that is being evaluated
-    :return: Number of ray reflections on the component
-    """
-    return individual.no_of_reflections
-
-
 def light_pollution(individual_rays: List[List[Segment]]) -> int:
     """
     Compute light pollution that is a result of using Component

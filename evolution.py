@@ -1,12 +1,12 @@
 import random
 from math import factorial
 
-from auxiliary import draw, log_stats_init, log_stats_append
+from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments, recalculate_intersections
 from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment, x_over_multiple_segments, x_over_two_segments
-from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution, obtrusive_light
+from quality_assesment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light
 
 from deap import base
 from deap import creator
@@ -27,8 +27,6 @@ def evaluate(individual: Component, env: Environment):
     road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
     if env.quality_criterion == "obtrusive light":
         return obtrusive_light(individual.original_rays)
-    if env.quality_criterion == "glare reduction":
-        return glare_reduction(individual)
     if env.quality_criterion == "efficiency":
         return efficiency(individual.original_rays)
     if env.number_of_led == 2:
@@ -39,7 +37,7 @@ def evaluate(individual: Component, env: Environment):
         return illuminance_uniformity(segments_intensity)
     if env.quality_criterion == "all":
         individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
-                                    obtrusive_light(individual.original_rays), 2*light_pollution(individual.original_rays)]
+                                    obtrusive_light(individual.original_rays), env.number_of_led*light_pollution(individual.original_rays)]
         weights = [1, 10, 4, -1]
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
@@ -52,11 +50,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               population_size: int, number_of_generations: int,
               xover_prob: float, mut_angle_prob: float, mut_length_prob: float,
               shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
-    NOBJ = 3
-    P = 4
-    H = factorial(NOBJ + P - 1) / (factorial(P) * factorial(NOBJ - 1))
-    MU = int(H + (4 - H % 4))
-    ref_points = tools.uniform_reference_points(NOBJ, P)
+
     # Initiating evolutionary algorithm
     creator.create("Fitness", base.Fitness, weights=(1.0,))
     creator.create("Individual", Component, fitness=creator.Fitness)
@@ -69,7 +63,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
     toolbox.register("select", tools.selTournament, tournsize=2)
-    #toolbox.register("select", tools.selNSGA3, ref_points=ref_points)
 
     # Initiating first population
     pop = toolbox.population(n=population_size)
@@ -102,7 +95,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
-        #offspring = pop[:]
         # Clone the selected individuals
         offspring = list(map(toolbox.clone, offspring))
 
@@ -157,7 +149,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
         pop[:] = offspring
-        #pop = toolbox.select(pop + offspring, MU)
 
         hof.update(pop)
 
@@ -168,11 +159,17 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
             fitnesses.append(evaluate(item, env))
         print(fitnesses)
 
-        stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
+        if env.configuration == "two connected":
+            stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
                      f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
                      f"left_length: {best_ind.left_length_coef*env.base_length}, " \
                      f"right angle: {best_ind.right_angle-env.base_slope}, " \
                      f"left_length: {best_ind.right_length_coef*env.base_length} "
+        if env.configuration == "multiple free":
+            stats_line = f"{g + 1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, "
+            for reflective_segment in best_ind.reflective_segments:
+                dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
+                stats_line = stats_line + dimensions
         log_stats_append(f"stats", stats_line)
         print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)
@@ -189,7 +186,7 @@ def main():
 
     # Load parameters for environment
     base_length = config.lamp.base_length
-    base_slope = config.lamp.base_angle
+    base_slope = config.lamp.base_slope
     road_start = config.road.start
     road_end = config.road.end
     road_depth = config.road.depth
@@ -203,7 +200,16 @@ def main():
 
     number_of_LEDs = config.lamp.number_of_LEDs
     separating_distance = config.lamp.separating_distance
+    modification = config.lamp.modification
 
+    invalid_parameters = check_parameters_environment(base_length, base_slope, road_start, road_end, road_depth,
+                                                      road_sections, criterion, cosine_error, reflective_factor,
+                                                      configuration, number_of_LEDs, separating_distance, modification)
+    if invalid_parameters:
+        print(f"Invalid value for parameters {invalid_parameters}")
+        return
+    else:
+        print(f" Environment parameters: ok")
     # Init environment
     env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration,
@@ -237,6 +243,17 @@ def main():
     rotate_segment_prob = operators.mutation.segment_rotation_prob
     resize_segment_prob = operators.mutation.segment_resizing_prob
 
+    invalid_parameters = check_parameters_evolution(number_of_rays, ray_distribution, angle_lower_bound,
+                                                    angle_upper_bound, length_lower_bound, length_upper_bound,
+                                                    no_of_reflective_segments, distance_limit, length_limit,
+                                                    population_size, number_of_generations, xover_prob, angle_mut_prob,
+                                                    length_mut_prob, shift_segment_prob, rotate_segment_prob,
+                                                    resize_segment_prob)
+    if invalid_parameters:
+        print(f"Invalid value for parameters {invalid_parameters}")
+        return
+    else:
+        print(f" Evolution parameters: ok")
 
     # Run evolution algorithm
     evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
@@ -246,5 +263,4 @@ def main():
 
 
 if __name__ == "__main__":
-    random.seed(2)
     main()

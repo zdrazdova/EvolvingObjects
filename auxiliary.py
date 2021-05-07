@@ -1,55 +1,8 @@
 import math
-
-from geometer import Polygon
-from sympy import Segment
-from sympy.geometry import Ray, Point
+from typing import List
 
 from component import Component
-from component_3d import Component3D
 from environment import Environment
-
-
-def print_ray(ray: Ray):
-    x1 = round(float(ray.p1.x), 2)
-    y1 = round(float(ray.p1.y), 2)
-    x2 = round(float(ray.p2.x), 2)
-    y2 = round(float(ray.p2.y), 2)
-    print("Ray ", "X: ", x1, "Y: ", y1, " - ", "X: ", x2, "Y: ", y2)
-
-
-def print_ray_3d(ray: Ray):
-    point1 = ray.p1
-    x = round(float(point1.x), 2)
-    y = round(float(point1.y), 2)
-    z = round(float(point1.z), 2)
-    point2 = ray.p2
-    x2 = round(float(point2.x), 2)
-    y2 = round(float(point2.y), 2)
-    z2 = round(float(point2.z), 2)
-    print("X: ", x, "Y: ", y, "Z: ", z, "-- X: ", x2, "Y: ", y2, "Z: ", z2)
-
-
-def print_point(point: Point):
-    x = round(float(point.x), 2)
-    y = round(float(point.y), 2)
-    print("X: ", x, "Y: ", y)
-
-
-def print_point_3d(point: Point):
-    x = round(float(point.x), 2)
-    y = round(float(point.y), 2)
-    z = round(float(point.z), 2)
-    print("X: ", x, "Y: ", y, "Z: ", z)
-
-
-def print_point_array(points: [Point]):
-    outcome = "[ "
-    for point in points:
-        x = str(round(float(point.x), 2))
-        y = str(round(float(point.y), 2))
-        outcome += "(" + x + ", " + y + "), "
-    outcome += "]"
-    print(outcome)
 
 
 def log_stats_init(name: str, line: str):
@@ -189,55 +142,94 @@ def draw(ind: Component, name: str, env: Environment):
         f.write('</svg>')
 
 
-def calculate_borders(road_start: int, road_end: int, road_depth: int) -> (Segment, Segment, Segment, Segment):
-    top_left = Point(0, 0)
-    bottom_left = Point(0, road_depth - 2000)
-    if road_start < 0:
-        top_left = Point(road_start-1000, 0)
-        bottom_left = Point(road_start-1000, road_depth - 2000)
-    top_right = Point(road_end + 2000, 0)
-    bottom_right = Point(road_end + 2000, road_depth - 2000)
-    left = Segment(top_left, bottom_left)
-    right = Segment(top_right, bottom_right)
-    bottom = Segment(bottom_left, bottom_right)
-    top = Segment(top_left, top_right)
-    return left, right, bottom, top
+def check_parameters_environment(base_length: int, base_slope: int, road_start: int, road_end: int, road_depth: int,
+                                 road_sections: int, criterion: str, cosine_error: str, reflective_factor: float,
+                                 configuration: str, number_of_led: int, separating_distance: int,
+                                 modification: str) -> List[str]:
+
+    invalid = []
+    if configuration not in ["multiple free", "two connected"]:
+        invalid.append("configuration")
+    if modification not in ["mirror", "shift"]:
+        invalid.append("modification")
+    if criterion not in ["all", "efficiency", "illuminance uniformity", "obtrusive light"]:
+        invalid.append("criterion")
+    if cosine_error not in ["yes", "no"]:
+        invalid.append("cosine error")
+
+    if type(base_length) != int or base_length <= 0:
+        invalid.append("base length")
+    if type(base_slope) != int or 0 > base_slope or base_slope > 180:
+        invalid.append("base slope")
+
+    if type(road_start) != int:
+        invalid.append("road start")
+    if type(road_end) != int or road_end <= road_start:
+        invalid.append("road end")
+    if type(road_depth) != int or road_depth >= 0:
+        invalid.append("road depth")
+    if type(road_sections) != int or road_sections <= 0:
+        invalid.append("road sections")
+
+    if type(reflective_factor) != float or reflective_factor <= 0 or reflective_factor > 1:
+        invalid.append("reflective factor")
+    if type(number_of_led) != int or number_of_led <= 0:
+        invalid.append("number of LEDs")
+    if type(separating_distance) != int or reflective_factor <= 0:
+        invalid.append("separating distance")
+
+    if modification == "mirror" and number_of_led > 2:
+        invalid.append("mirror + number_of_LEDs")
+
+    return invalid
 
 
-def boundary_intersection(left: Segment, right: Segment, bottom: Segment, top: Segment, ray: Ray) -> (float, float):
-    shifted_ray = Ray(Point(ray.p1.x+1000, ray.p1.y-1000), Point(ray.p2.x+1000, ray.p2.y-1000))
-    intersection = left.intersection(shifted_ray)
-    if intersection:
-        return float(intersection[0].x), float(intersection[0].y)
-    intersection = right.intersection(shifted_ray)
-    if intersection:
-        return float(intersection[0].x), float(intersection[0].y)
-    intersection = bottom.intersection(shifted_ray)
-    if intersection:
-        return float(intersection[0].x), float(intersection[0].y)
-    intersection = top.intersection(shifted_ray)
-    if intersection:
-        return float(intersection[0].x), float(intersection[0].y)
+def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle_lower_bound: int,
+                               angle_upper_bound: int, length_lower_bound: int, length_upper_bound: int,
+                               no_of_reflective_segments: int, distance_limit: int, length_limit: int,
+                               population_size: int, number_of_generations: int, xover_prob: float,
+                               angle_mut_prob: float, length_mut_prob: float, shift_segment_prob: float,
+                               rotate_segment_prob: float, resize_segment_prob: float) -> List[str]:
+    invalid = []
 
+    if type(number_of_rays) != int or number_of_rays <= 0:
+        invalid.append("number of rays")
+    if ray_distribution not in ["uniform", "random"]:
+        invalid.append("ray distribution")
 
-def draw_road(ind: Component3D, name: str):
-    svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
-    # Generating drawing in SVG format
-    with open(svg_name, "w") as f:
-        x_offset = 8000
-        z_offset = 4000
-        color = "(250, 216, 22)"
-        f.write('<svg width="{0}" height="{1}">\n'.format(16000, 8000))
-        f.write('<rect width="{0}" height="{1}" fill="black"/>\n'.format(16000, 8000))
-        for ray in ind.original_rays:
-            array = ray.ray_array
-            alpha = str(round(ray.intensity, 3))
-            color = "(250, 216, 22)"
-            if ray.road_intersection:
-                #print(float(ray.road_intersection[0]), float(ray.road_intersection[1]), float(ray.road_intersection[2]))
-                x_int = (float(ray.road_intersection[0]))
-                y_int = (float(ray.road_intersection[1]))
-                z_int = (float(ray.road_intersection[2]))
-                f.write(f"<circle cx = \"{x_int+x_offset}\" cy = \"{z_int+z_offset}\" r = \"40\" style=\"fill:rgb{color};fill-opacity:{alpha};\" />\n")
+    if type(angle_lower_bound) != int or 90 > angle_lower_bound or angle_lower_bound > 180:
+        invalid.append("angle lower bound")
+    if type(angle_upper_bound) != int or angle_upper_bound > 180 or angle_upper_bound <= angle_lower_bound:
+        invalid.append("angle upper bound")
+    if type(length_lower_bound) != int or length_lower_bound <= 0:
+        invalid.append("length lower bound")
+    if type(length_upper_bound) != int or length_upper_bound <= length_lower_bound:
+        invalid.append("length upper bound")
 
-        f.write('</svg>')
+    if type(no_of_reflective_segments) != int or number_of_rays <= 0:
+        invalid.append("no of reflective segments")
+    if type(distance_limit) != int or distance_limit <= 0:
+        invalid.append("distance limit")
+    if type(length_limit) != int or length_limit <= 0:
+        invalid.append("length limit")
+
+    if type(population_size) != int or population_size <= 0:
+        invalid.append("population size")
+    if type(number_of_generations) != int or number_of_generations <= 0:
+        invalid.append("number of generations")
+
+    if type(xover_prob) != float or xover_prob < 0 or xover_prob > 1:
+        invalid.append("xover prob")
+    if type(angle_mut_prob) != float or angle_mut_prob < 0 or angle_mut_prob > 1:
+        invalid.append("angle mut prob")
+    if type(length_mut_prob) != float or length_mut_prob < 0 or length_mut_prob > 1:
+        invalid.append("length mut prob")
+
+    if type(shift_segment_prob) != float or shift_segment_prob < 0 or shift_segment_prob > 1:
+        invalid.append("shift segment prob")
+    if type(rotate_segment_prob) != float or rotate_segment_prob < 0 or rotate_segment_prob > 1:
+        invalid.append("rotate segment prob")
+    if type(resize_segment_prob) != float or resize_segment_prob < 0 or resize_segment_prob > 1:
+        invalid.append("resize segment prob")
+
+    return invalid
