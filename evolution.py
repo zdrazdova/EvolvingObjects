@@ -6,7 +6,7 @@ from custom_geometry import compute_intersections, compute_reflections_two_segme
     compute_reflection_multiple_segments, recalculate_intersections
 from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment, x_over_multiple_segments, x_over_two_segments
-from quality_assesment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light
+from quality_assesment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light_elimination
 
 from deap import base
 from deap import creator
@@ -24,21 +24,24 @@ def evaluate(individual: Component, env: Environment):
         compute_reflections_two_segments(individual, env.reflective_factor)
     if env.configuration == "multiple free":
         compute_reflection_multiple_segments(individual, env.reflective_factor)
-    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
-    if env.quality_criterion == "obtrusive light":
-        return obtrusive_light(individual.original_rays)
     if env.quality_criterion == "efficiency":
         return efficiency(individual.original_rays)
-    if env.number_of_led == 2:
-        road_intersections = recalculate_intersections(road_intersections, 24)
-    segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start, env.road_length)
+    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
+    if env.number_of_led > 1:
+        road_intersections = recalculate_intersections(road_intersections, env.number_of_led, env.separating_distance,
+                                                       env.modification, env.road_start, env.road_end)
+    if env.quality_criterion == "obtrusive light":
+        return obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led)
+    segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start,
+                                                    env.road_length, env.cosine_error)
     individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
         return illuminance_uniformity(segments_intensity)
     if env.quality_criterion == "all":
         individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
-                                    obtrusive_light(individual.original_rays), env.number_of_led*light_pollution(individual.original_rays)]
-        weights = [1, 10, 4, -1]
+                                    obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
+                                    env.number_of_led*light_pollution(individual.original_rays)]
+        weights = [1, 5, 6, -1]
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
     return efficiency(individual)
@@ -213,7 +216,7 @@ def main():
     # Init environment
     env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration,
-                      number_of_LEDs, separating_distance)
+                      number_of_LEDs, separating_distance, modification)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays

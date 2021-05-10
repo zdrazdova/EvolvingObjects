@@ -8,7 +8,8 @@ from environment import Environment
 def log_stats_init(name: str, line: str):
     stats_name = "stats/log-" + str(name) + ".csv"
     with open(stats_name, "w") as f:
-        f.write(f"generation, best fitness, average fitness, fitness array, left segment angle, left segment length, right segment angle, right segment length  \n")
+        f.write(f"generation, best fitness, average fitness, fitness array, left segment angle, left segment length, "
+                f"right segment angle, right segment length  \n")
         f.write(line)
 
 
@@ -35,9 +36,6 @@ def draw(ind: Component, name: str, env: Environment):
             '<svg width="{0}" height="{1}">'.format(env.road_end + x_offset + 1000, abs(env.road_depth) + 2000))
         f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(env.road_end + x_offset + 1000,
                                                                        abs(env.road_depth) + 2000))
-        # f.write('<rect x="950" y="950" width="100" height="4070" fill="gray"/>') #pole
-        # f.write('<rect x="100" y="950" width="900" height="70" fill="gray"/>') # arm brackets + lamp
-
 
         for ray in ind.original_rays:
             array = ray.ray_array
@@ -48,11 +46,16 @@ def draw(ind: Component, name: str, env: Environment):
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
                         .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                                 float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
-                if env.number_of_led == 2:
+                if env.modification == "mirror":
                     f.write(
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
                         .format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
                                 -float(r.points[1].x) + x_offset- separating_distance, - float(r.points[1].y) + y_offset, color, alpha))
+                if env.modification == "shift":
+                    for l in range(1, env.number_of_led):
+                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
+                            .format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
+                                    float(r.points[1].x) + x_offset + l * env.separating_distance, - float(r.points[1].y) + y_offset, color, alpha))
             r = array[-1]
             intersection = env.road.intersection(r)
             if intersection:
@@ -61,11 +64,17 @@ def draw(ind: Component, name: str, env: Environment):
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
                         .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
                                 float(intersection.x) + x_offset, - float(intersection.y) + y_offset, color, alpha))
-                if env.number_of_led == 2:
+                if env.modification == "mirror":
                     f.write(
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
                         .format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
                                 -float(intersection.x) + x_offset - separating_distance, - float(intersection.y) + y_offset, color, alpha))
+                if env.modification == "shift":
+                    for l in range(1, env.number_of_led):
+                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
+                        .format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
+                                float(intersection.x) + x_offset + l * env.separating_distance, - float(intersection.y) + y_offset, color, alpha))
+
             else:
                 x_diff = float(r.points[1].x - r.points[0].x)
                 y_diff = float(r.points[1].y - r.points[0].y)
@@ -79,13 +88,21 @@ def draw(ind: Component, name: str, env: Environment):
                                 float(r.points[0].x) + x_offset + x_diff,
                                 -float(r.points[0].y) + y_offset - y_diff,
                                 color, alpha))
-                if env.number_of_led == 2:
+                if env.modification == "mirror":
                     f.write(
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
                     '\n'.format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
                                 -float(r.points[0].x) + x_offset - x_diff - separating_distance,
                                 -float(r.points[0].y) + y_offset - y_diff,
                                 color, alpha))
+                if env.modification == "shift":
+                    for l in range(1, env.number_of_led):
+                        f.write(
+                            '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
+                            '\n'.format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
+                                        float(r.points[0].x) + x_offset + x_diff + l * env.separating_distance,
+                                        -float(r.points[0].y) + y_offset - y_diff,
+                                        color, alpha))
 
 
         f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
@@ -108,29 +125,45 @@ def draw(ind: Component, name: str, env: Environment):
         f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
             ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
             ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset))
-        if env.number_of_led == 2:
+        if env.modification == "mirror":
             f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
             -ind.base.p1.x + x_offset - separating_distance, -ind.base.p1.y + y_offset,
             -ind.base.p2.x + x_offset - separating_distance, -ind.base.p2.y + y_offset))
+        if env.modification == "shift":
+            for l in range(1, env.number_of_led):
+                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+                ind.base.p1.x + x_offset + l * env.separating_distance, -ind.base.p1.y + y_offset,
+                ind.base.p2.x + x_offset + l * env.separating_distance, -ind.base.p2.y + y_offset))
+
 
         if env.configuration == "two connected":
             # right segment
             f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
                 ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset,
                 float(ind.right_segment.p2.x) + x_offset, float(-ind.right_segment.p2.y) + y_offset))
-            if env.number_of_led == 2:
+            if env.modification == "mirror":
                 f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
                 -ind.base.p2.x + x_offset - separating_distance, -ind.base.p2.y + y_offset,
                 -float(ind.right_segment.p2.x) + x_offset - separating_distance, float(-ind.right_segment.p2.y) + y_offset))
-
+            if env.modification == "shift":
+                for l in range(1, env.number_of_led):
+                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+                        ind.base.p2.x + x_offset + l * env.separating_distance, -ind.base.p2.y + y_offset,
+                        float(ind.right_segment.p2.x) + x_offset + l * env.separating_distance, float(-ind.right_segment.p2.y) + y_offset))
             # left segment
             f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
                 ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
                 float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
-            if env.number_of_led == 2:
+            if env.modification == "mirror":
                 f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
                 -ind.base.p1.x + x_offset - separating_distance, -ind.base.p1.y + y_offset,
                 -float(ind.left_segment.p2.x) + x_offset - separating_distance, float(-ind.left_segment.p2.y) + y_offset))
+            if env.modification == "shift":
+                for l in range(1, env.number_of_led):
+                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
+                    ind.base.p1.x + x_offset + l * env.separating_distance, -ind.base.p1.y + y_offset,
+                    float(ind.left_segment.p2.x) + x_offset + l * env.separating_distance, float(-ind.left_segment.p2.y) + y_offset))
+
         if env.configuration == "multiple free":
             # reflective segments
             for segment in ind.reflective_segments:

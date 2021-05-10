@@ -8,15 +8,15 @@ from component import Component
 from custom_ray import MyRay
 
 
-def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -> List[Tuple[Rational, float]]:
+def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -> List[Tuple[Rational, float, float]]:
     """
     Compute intersections of rays from LED and road below the lamp. Zip x coordinates of each intersection
-    with intensity of the ray. If cosine_error has value "Yes" multiply intensity by reduction caused by the angle
+    with intensity of the ray. If cosine_error has value "yes" multiply intensity by reduction caused by the angle
     of incident ray and the road.
 
     :param rays: List of rays directed from LED
     :param road: Segment representing road that rays should fall on
-    :param cosine_error: Yes/No indicator whether to work with cosine error or not
+    :param cosine_error: yes/no indicator whether to work with cosine error or not
     :return: List of tuples (x-coord of road intersection, intensity of incident ray)
     """
     inter_array = []
@@ -25,21 +25,30 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
         inter_point = road.intersection(ray.ray_array[-1])
         if inter_point:
             intensity = ray.intensity
-            if cosine_error == "Yes":
-                reduction = float(sin(ray.ray_array[-1].angle_between(road)))
-                intensity = ray.intensity*reduction
-            inter_array.append((inter_point[0].x, intensity))
+            reduction = float(sin(ray.ray_array[-1].angle_between(road)))
+            cos_error_intensity = ray.intensity*reduction
+            inter_array.append((inter_point[0].x, intensity, cos_error_intensity))
             ray.road_intersection = inter_point[0].x
     return inter_array
 
 
-def recalculate_intersections(intersections: List[Tuple[Rational, float]], shift: int) -> List[Tuple[Rational, float]]:
+def recalculate_intersections(intersections: List[Tuple[Rational, float]], number_of_led: int, separating_distance: int,
+                              modification: str, road_start: int, road_end: int) -> List[Tuple[Rational, float]]:
     recalculated = []
-    for i in intersections:
-        recalculated.append(i)
-        new_x = i[0] * -1 -shift
-        new_intersection = (new_x, i[1])
-        recalculated.append(new_intersection)
+    if modification == "mirror":
+        for i in intersections:
+            recalculated.append(i)
+            new_x = i[0] * -1 - separating_distance
+            if road_start <= new_x <= road_end:
+                new_intersection = (new_x, i[1], i[2])
+                recalculated.append(new_intersection)
+    else:
+        for i in intersections:
+            for l in range(number_of_led):
+                new_x = i[0] + separating_distance * l
+                if road_start <= new_x <= road_end:
+                    new_intersection = (new_x, i[1], i[2])
+                    recalculated.append(new_intersection)
     return recalculated
 
 
@@ -66,7 +75,6 @@ def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_
     new_point = Point(meet_point.x + x_diff, meet_point.y + y_diff)
     reflected_ray = Ray(intersection, new_point)
     ray_intensity = intensity * reflective_factor
-    #print(intensity, ray_intensity)
     return reflected_ray, ray_intensity
 
 
@@ -118,22 +126,21 @@ def compute_reflection_segment_simple(ray_array, segment, ray_intensity, r_facto
 
 
 def compute_reflection_multiple_segments(ind: Component, r_factor: float):
-    no_of_reflection = 0
     for ray in ind.original_rays:
-        ray_intensity = ray.intensity
+        ray_intensity = ray.original_intensity
         ray.ray_array = [ray.ray]
         last_reflection = ind.base
         reflection_exists = True
-        while reflection_exists:
+        no_of_reflections = 0
+        while reflection_exists and no_of_reflections < 20:
             segment = closest_segment(ind.reflective_segments+[ind.base], ray.ray_array[-1], last_reflection)
             if len(segment) == 1:
                 ray.ray_array, ray_intensity = compute_reflection_segment_simple(ray.ray_array, segment[0], ray_intensity, r_factor)
                 last_reflection = segment[0]
-                no_of_reflection += 1
+                no_of_reflections += 1
             else:
                 reflection_exists = False
         ray.intensity = ray_intensity
-    ind.no_of_reflections = no_of_reflection
 
 
 
@@ -148,7 +155,7 @@ def compute_reflections_two_segments(ind: Component, r_factor: float):
     ind.compute_left_segment()
     no_of_reflections = 0
     for ray in ind.original_rays:
-        ray_intensity = ray.intensity
+        ray_intensity = ray.original_intensity
         continue_left = True
         continue_right = True
         previous_i_r = Point(0, 0)
@@ -167,55 +174,14 @@ def compute_reflections_two_segments(ind: Component, r_factor: float):
     ind.no_of_reflections = no_of_reflections
 
 
-def compute_reflections_two_segments_unused(ind: Component, r_factor: float):
-    ind.compute_right_segment()
-    ind.compute_left_segment()
-    no_of_reflections = 0
-    for ray in ind.original_rays:
-        ray_intensity = ray.intensity
-        continue_left = True
-        continue_right = True
-        previous_i_r = Point(0, 0)
-        previous_i_l = Point(0, 0)
-        ray.ray_array = [ray.ray]
-        while continue_left or continue_right:
-            continue_left = False
-            continue_right = False
-            last_ray = ray.ray_array[-1]
-            intersection_r = last_ray.intersection(ind.right_segment)
-            if intersection_r and intersection_r[0] != previous_i_r:
-                previous_i_r = intersection_r[0]
-                reflected_ray, ray_intensity = compute_reflection(last_ray, ind.right_segment, ray_intensity, r_factor)
-                no_of_reflections += 1
-                new_ray_array = ray.ray_array[:-1]
-                new_ray_array.append(Ray(last_ray.p1, intersection_r[0]))
-                new_ray_array.append(reflected_ray)
-                ray.ray_array = new_ray_array
-                ray.intensity = ray_intensity
-                continue_left = True
-            last_ray = ray.ray_array[-1]
-            intersection_l = last_ray.intersection(ind.left_segment)
-            if intersection_l and intersection_l[0] != previous_i_l:
-                previous_i_l = intersection_l[0]
-                reflected_ray, ray_intensity = compute_reflection(last_ray, ind.left_segment, ray_intensity, r_factor)
-                no_of_reflections += 1
-                new_ray_array = ray.ray_array[:-1]
-                new_ray_array.append(Ray(last_ray.p1, intersection_l[0]))
-                new_ray_array.append(reflected_ray)
-                ray.ray_array = new_ray_array
-                ray.intensity = ray_intensity
-                continue_right = True
-    ind.no_of_reflections = no_of_reflections
-
-
-def prepare_intersections(points: List[Tuple[Rational, float]]) -> List[Tuple[float, float]]:
+def prepare_intersections(points: List[Tuple[Rational, float, float]]) -> List[Tuple[float, float, float]]:
     """
     Prepare a list of tuples sorted according to first items which are also converted to float
 
     :param points: List of tuples (x-coord of road intersection, intensity of incident ray)
     :return: List of tuples (x-coord to float, intensity of incident ray) sorted according to first item
     """
-    return sorted([(float(x), y) for x, y in points])
+    return sorted([(float(x), y, z) for x, y, z in points])
 
 
 def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment):

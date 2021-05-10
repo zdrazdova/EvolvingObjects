@@ -2,12 +2,12 @@
     "lamp": {
 	"number_of_LEDs": 1,
 	"separating_distance": 24,
-	"modification": "mirror",
+	"modification": "shift",
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
-        "base_length": 20,
-        "base_slope": 180,
-	"configuration": "multiple free",
+        "base_length": 200,
+        "base_slope": 60,
+	"configuration": "two connected",
 	"two_connected": {
 	    "angle_lower_bound": 90,
                 "angle_upper_bound": 180,
@@ -22,9 +22,9 @@
     },
     "road": {
         "start": 0,
-        "end": 12000, 
-	    "depth": -4000,
-	    "sections": 4
+        "end": 16000, 
+	    "depth": -6000,
+	    "sections": 6
     },
     "evolution": {
         "population_size": 24,
