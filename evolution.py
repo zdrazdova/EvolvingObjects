@@ -88,8 +88,8 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         draw(pop[i], f"{i}", env)
     print("Drawing initial population finished")
 
-    stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
-    log_stats_init(f"stats", stats_line)
+    #stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
+    #log_stats_init(f"stats", stats_line)
 
     # Initiating elitism
     #hof = HallOfFame(1)
@@ -178,18 +178,18 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
             fitnesses.append(evaluate(item, env))
         print(fitnesses)
 
-        if env.configuration == "two connected":
-            stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
-                     f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
-                     f"left_length: {best_ind.left_length_coef*env.base_length}, " \
-                     f"right angle: {best_ind.right_angle-env.base_slope}, " \
-                     f"left_length: {best_ind.right_length_coef*env.base_length} "
-        if env.configuration == "multiple free":
-            stats_line = f"{g + 1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, "
-            for reflective_segment in best_ind.reflective_segments:
-                dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
-                stats_line = stats_line + dimensions
-        log_stats_append(f"stats", stats_line)
+        #if env.configuration == "two connected":
+        #    stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
+        #             f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
+        #             f"left_length: {best_ind.left_length_coef*env.base_length}, " \
+        #             f"right angle: {best_ind.right_angle-env.base_slope}, " \
+        #             f"left_length: {best_ind.right_length_coef*env.base_length} "
+        #if env.configuration == "multiple free":
+        #    stats_line = f"{g + 1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, "
+        #    for reflective_segment in best_ind.reflective_segments:
+        #        dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
+        #        stats_line = stats_line + dimensions
+        #log_stats_append(f"stats", stats_line)
         print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)
 
