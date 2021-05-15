@@ -38,13 +38,17 @@ def evaluate(individual: Component, env: Environment):
     individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
         return illuminance_uniformity(segments_intensity)
-    if env.quality_criterion == "all":
+    if env.quality_criterion == "weighted_sum":
         individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
                                     obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
                                     env.number_of_led*light_pollution(individual.original_rays)]
         weights = env.weights
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
+    if env.quality_criterion == "nsgaii":
+        return efficiency(individual.original_rays), illuminance_uniformity(segments_intensity), \
+               obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led), \
+               env.number_of_led*light_pollution(individual.original_rays)
     return efficiency(individual)
 
 
@@ -66,7 +70,8 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                      distance_limit=distance_limit, length_limit=length_limit)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
-    toolbox.register("select", tools.selTournament, tournsize=2)
+    #toolbox.register("select", tools.selTournament, tournsize=2)
+    toolbox.register("select", tools.selNSGA2)
 
     # Initiating first population
     pop = toolbox.population(n=population_size)
@@ -87,7 +92,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     log_stats_init(f"stats", stats_line)
 
     # Initiating elitism
-    hof = HallOfFame(1)
+    #hof = HallOfFame(1)
+    #hof.update(pop)
+
+    pop = toolbox.select(pop, len(pop))
+    hof = tools.ParetoFront()
     hof.update(pop)
 
     print("Start of evolution")
@@ -98,9 +107,12 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"-- Generation {g} --")
 
         # Select the next generation individuals
-        offspring = toolbox.select(pop, len(pop))
+        #offspring = toolbox.select(pop, len(pop))
         # Clone the selected individuals
-        offspring = list(map(toolbox.clone, offspring))
+        #offspring = list(map(toolbox.clone, offspring))
+
+        offspring = tools.selTournamentDCD(pop, len(pop))
+        offspring = [toolbox.clone(ind) for ind in offspring]
 
         # Apply crossover and mutation on the offspring
 
@@ -152,8 +164,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
         print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
-        pop[:] = offspring
+        #pop[:] = offspring
 
+        #hof.update(pop)
+
+        pop = toolbox.select(pop + offspring, population_size)
         hof.update(pop)
 
         best_ind = hof[0]

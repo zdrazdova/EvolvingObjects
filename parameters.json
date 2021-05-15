@@ -27,7 +27,7 @@
 	    "sections": 4
     },
     "evolution": {
-        "population_size": 10,
+        "population_size": 4,
         "number_of_generations": 64,
         "operators": {
             "mutation": {
@@ -44,7 +44,7 @@
 	"reflective_factor" : 0.98,
 	"reflections_timeout": 4,
 	"cosine_error": "no",
-        "criterion": "efficiency",
+        "criterion": "nsgaii",
         "weights": [1,10,5,-1]
     }
 }

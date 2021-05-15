@@ -186,7 +186,7 @@ def check_parameters_environment(base_length: int, base_slope: int, road_start: 
         invalid.append("configuration")
     if modification not in ["mirror", "shift"]:
         invalid.append("modification")
-    if criterion not in ["all", "efficiency", "illuminance uniformity", "obtrusive light"]:
+    if criterion not in ["all", "efficiency", "illuminance uniformity", "obtrusive light", "weighted_sum", "nsgaii"]:
         invalid.append("criterion")
     if cosine_error not in ["yes", "no"]:
         invalid.append("cosine error")
