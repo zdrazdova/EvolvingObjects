@@ -2,12 +2,12 @@
     "lamp": {
 	"number_of_LEDs": 1,
 	"separating_distance": 24,
-	"modification": "shift",
+	"modification": "mirror",
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
-        "base_length": 200,
-        "base_slope": 60,
-	"configuration": "two connected",
+        "base_length": 40,
+        "base_slope": 180,
+	"configuration": "multiple free",
 	"two_connected": {
 	    "angle_lower_bound": 90,
                 "angle_upper_bound": 180,
@@ -22,12 +22,12 @@
     },
     "road": {
         "start": 0,
-        "end": 16000, 
-	    "depth": -6000,
-	    "sections": 6
+        "end": 12000, 
+	    "depth": -4000,
+	    "sections": 4
     },
     "evolution": {
-        "population_size": 24,
+        "population_size": 10,
         "number_of_generations": 64,
         "operators": {
             "mutation": {
@@ -42,8 +42,10 @@
     },
     "evaluation": {
 	"reflective_factor" : 0.98,
-	"cosine_error": "yes",
-        "criterion": "all"
+	"reflections_timeout": 4,
+	"cosine_error": "no",
+        "criterion": "efficiency",
+        "weights": [1,10,5,-1]
     }
 }
 

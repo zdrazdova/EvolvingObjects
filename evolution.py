@@ -1,5 +1,6 @@
 import random
 from math import factorial
+from typing import List
 
 from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
@@ -23,7 +24,7 @@ def evaluate(individual: Component, env: Environment):
     if env.configuration == "two connected":
         compute_reflections_two_segments(individual, env.reflective_factor)
     if env.configuration == "multiple free":
-        compute_reflection_multiple_segments(individual, env.reflective_factor)
+        compute_reflection_multiple_segments(individual, env.reflective_factor, env.reflections_timeout)
     if env.quality_criterion == "efficiency":
         return efficiency(individual.original_rays)
     road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
@@ -41,7 +42,7 @@ def evaluate(individual: Component, env: Environment):
         individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
                                     obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
                                     env.number_of_led*light_pollution(individual.original_rays)]
-        weights = [1, 5, 6, -1]
+        weights = env.weights
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
     return efficiency(individual)
@@ -200,6 +201,8 @@ def main():
     criterion = config.evaluation.criterion
     cosine_error = config.evaluation.cosine_error
     reflective_factor = config.evaluation.reflective_factor
+    reflections_timeout = config.evaluation.reflections_timeout
+    weights = config.evaluation.weights
 
     number_of_LEDs = config.lamp.number_of_LEDs
     separating_distance = config.lamp.separating_distance
@@ -207,7 +210,8 @@ def main():
 
     invalid_parameters = check_parameters_environment(base_length, base_slope, road_start, road_end, road_depth,
                                                       road_sections, criterion, cosine_error, reflective_factor,
-                                                      configuration, number_of_LEDs, separating_distance, modification)
+                                                      configuration, number_of_LEDs, separating_distance, modification,
+                                                      weights, reflections_timeout)
     if invalid_parameters:
         print(f"Invalid value for parameters {invalid_parameters}")
         return
@@ -216,7 +220,7 @@ def main():
     # Init environment
     env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration,
-                      number_of_LEDs, separating_distance, modification)
+                      number_of_LEDs, separating_distance, modification, weights, reflections_timeout)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays

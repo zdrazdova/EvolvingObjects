@@ -19,3 +19,4 @@ class MyRay:
         # Array used for storing segments of reflected ray
         self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate))]
         self.road_intersection = []
+        self.terminated = False

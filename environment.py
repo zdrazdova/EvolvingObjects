@@ -1,13 +1,14 @@
 import math
+from typing import List
 
 from sympy import Point, Segment, Polygon, Plane
 
 
 class Environment:
-    def __init__(self, base_length: int, base_slope: int,
-                 road_start: int, road_end: int, road_depth: int, road_sections: int,
-                 criterion: str, cosine_error: str, reflective_factor: float, configuration: str,
-                 number_of_led: int, separating_distance: float, modification: str):
+    def __init__(self, base_length: int, base_slope: int, road_start: int, road_end: int, road_depth: int,
+                 road_sections: int, criterion: str, cosine_error: str, reflective_factor: float, configuration: str,
+                 number_of_led: int, separating_distance: float, modification: str, weights: List[int],
+                 reflections_timeout: int):
 
         self.origin = Point(0, 0)
         self.base_slope = base_slope
@@ -26,10 +27,14 @@ class Environment:
         self.road_sections = road_sections
 
         self.reflective_factor = reflective_factor
+        self.reflections_timeout = reflections_timeout
         self.cosine_error = cosine_error
         self.quality_criterion = criterion
         self.configuration = configuration
+        self.weights = weights
 
         self.number_of_led = number_of_led
         self.separating_distance = separating_distance
         self.modification = modification
+        if self.modification == "mirror" and self.number_of_led != 2:
+            self.modification = ""

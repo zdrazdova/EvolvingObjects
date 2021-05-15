@@ -23,7 +23,7 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
     for ray in rays:
         ray.road_intersection = []
         inter_point = road.intersection(ray.ray_array[-1])
-        if inter_point:
+        if inter_point and not ray.terminated:
             intensity = ray.intensity
             reduction = float(sin(ray.ray_array[-1].angle_between(road)))
             cos_error_intensity = ray.intensity*reduction
@@ -125,19 +125,21 @@ def compute_reflection_segment_simple(ray_array, segment, ray_intensity, r_facto
     return ray_array, ray_intensity
 
 
-def compute_reflection_multiple_segments(ind: Component, r_factor: float):
+def compute_reflection_multiple_segments(ind: Component, r_factor: float, r_timeout):
     for ray in ind.original_rays:
         ray_intensity = ray.original_intensity
         ray.ray_array = [ray.ray]
         last_reflection = ind.base
         reflection_exists = True
         no_of_reflections = 0
-        while reflection_exists and no_of_reflections < 20:
+        while reflection_exists and no_of_reflections < r_timeout:
             segment = closest_segment(ind.reflective_segments+[ind.base], ray.ray_array[-1], last_reflection)
             if len(segment) == 1:
                 ray.ray_array, ray_intensity = compute_reflection_segment_simple(ray.ray_array, segment[0], ray_intensity, r_factor)
                 last_reflection = segment[0]
                 no_of_reflections += 1
+                if no_of_reflections == r_timeout:
+                    ray.terminated = True
             else:
                 reflection_exists = False
         ray.intensity = ray_intensity

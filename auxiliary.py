@@ -58,7 +58,7 @@ def draw(ind: Component, name: str, env: Environment):
                                     float(r.points[1].x) + x_offset + l * env.separating_distance, - float(r.points[1].y) + y_offset, color, alpha))
             r = array[-1]
             intersection = env.road.intersection(r)
-            if intersection:
+            if intersection and not ray.terminated:
                 intersection = intersection[0]
                 f.write(
                     '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
@@ -76,33 +76,34 @@ def draw(ind: Component, name: str, env: Environment):
                                 float(intersection.x) + x_offset + l * env.separating_distance, - float(intersection.y) + y_offset, color, alpha))
 
             else:
-                x_diff = float(r.points[1].x - r.points[0].x)
-                y_diff = float(r.points[1].y - r.points[0].y)
-                length = math.sqrt(x_diff * x_diff + y_diff * y_diff)
-                ratio = diag /length
-                x_diff = float(r.points[1].x - r.points[0].x) * ratio
-                y_diff = float(r.points[1].y - r.points[0].y) * ratio
-                f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                    '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                float(r.points[0].x) + x_offset + x_diff,
-                                -float(r.points[0].y) + y_offset - y_diff,
-                                color, alpha))
-                if env.modification == "mirror":
+                if not ray.terminated:
+                    x_diff = float(r.points[1].x - r.points[0].x)
+                    y_diff = float(r.points[1].y - r.points[0].y)
+                    length = math.sqrt(x_diff * x_diff + y_diff * y_diff)
+                    ratio = diag /length
+                    x_diff = float(r.points[1].x - r.points[0].x) * ratio
+                    y_diff = float(r.points[1].y - r.points[0].y) * ratio
                     f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                    '\n'.format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
-                                -float(r.points[0].x) + x_offset - x_diff - separating_distance,
-                                -float(r.points[0].y) + y_offset - y_diff,
-                                color, alpha))
-                if env.modification == "shift":
-                    for l in range(1, env.number_of_led):
+                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
+                        '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
+                                    float(r.points[0].x) + x_offset + x_diff,
+                                    -float(r.points[0].y) + y_offset - y_diff,
+                                    color, alpha))
+                    if env.modification == "mirror":
                         f.write(
-                            '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                            '\n'.format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
-                                        float(r.points[0].x) + x_offset + x_diff + l * env.separating_distance,
-                                        -float(r.points[0].y) + y_offset - y_diff,
-                                        color, alpha))
+                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
+                        '\n'.format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
+                                    -float(r.points[0].x) + x_offset - x_diff - separating_distance,
+                                    -float(r.points[0].y) + y_offset - y_diff,
+                                    color, alpha))
+                    if env.modification == "shift":
+                        for l in range(1, env.number_of_led):
+                            f.write(
+                                '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
+                                '\n'.format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
+                                            float(r.points[0].x) + x_offset + x_diff + l * env.separating_distance,
+                                            -float(r.points[0].y) + y_offset - y_diff,
+                                            color, alpha))
 
 
         f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
@@ -178,7 +179,7 @@ def draw(ind: Component, name: str, env: Environment):
 def check_parameters_environment(base_length: int, base_slope: int, road_start: int, road_end: int, road_depth: int,
                                  road_sections: int, criterion: str, cosine_error: str, reflective_factor: float,
                                  configuration: str, number_of_led: int, separating_distance: int,
-                                 modification: str) -> List[str]:
+                                 modification: str, weights: List[int], reflections_timeout: int) -> List[str]:
 
     invalid = []
     if configuration not in ["multiple free", "two connected"]:
@@ -189,6 +190,8 @@ def check_parameters_environment(base_length: int, base_slope: int, road_start: 
         invalid.append("criterion")
     if cosine_error not in ["yes", "no"]:
         invalid.append("cosine error")
+    if type(weights) != list or len(weights) != 4:
+        invalid.append("weights")
 
     if type(base_length) != int or base_length <= 0:
         invalid.append("base length")
@@ -206,6 +209,8 @@ def check_parameters_environment(base_length: int, base_slope: int, road_start: 
 
     if type(reflective_factor) != float or reflective_factor <= 0 or reflective_factor > 1:
         invalid.append("reflective factor")
+    if type(reflections_timeout) != int or reflections_timeout <= 2:
+        invalid.append("reflections timeout")
     if type(number_of_led) != int or number_of_led <= 0:
         invalid.append("number of LEDs")
     if type(separating_distance) != int or reflective_factor <= 0:

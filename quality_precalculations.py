@@ -43,7 +43,7 @@ def sum_intensity(rays: List[MyRay]) -> float:
     :param rays: All rays from LED
     :return: Sum of intensity of all rays form the LED
     """
-    return sum([ray.intensity for ray in rays])
+    return sum([ray.intensity for ray in rays if not ray.terminated])
 
 
 def compute_segments_intensity(road_intersections: List[Tuple[Rational, float, float]], road_sections: int,

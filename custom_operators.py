@@ -38,6 +38,8 @@ def resize_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
     chosen_segment_index = random.randint(0, len(reflective_segments)-1)
     chosen_segment = reflective_segments[chosen_segment_index]
     change_size_coefficient = random.random()*2
+    if change_size_coefficient < 0.5:
+        change_size_coefficient = 0.5
     changed_segment = change_size_segment(chosen_segment, change_size_coefficient)
     modified_segments = reflective_segments[:chosen_segment_index]
     modified_segments.append(changed_segment)
@@ -66,10 +68,10 @@ def mutate_length(individual: Component, length_upper_bound: int, length_lower_b
 
 
 def mutate_angle(individual: Component) -> Component:
-    individual.right_angle += random.randint(-5, 5)
+    individual.right_angle += random.randint(-10, 10)
     individual.right_angle = max(individual.angle_limit_min, individual.right_angle)
     individual.right_angle = min(individual.angle_limit_max, individual.right_angle)
-    individual.left_angle += random.randint(-5, 5)
+    individual.left_angle += random.randint(-10, 10)
     individual.left_angle = max(individual.angle_limit_min - 90, individual.left_angle)
     individual.left_angle = min(individual.angle_limit_max - 90, individual.left_angle)
     return individual
