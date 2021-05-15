@@ -2,6 +2,8 @@ import random
 from math import factorial
 from typing import List
 
+from deap.base import Fitness
+
 from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments, recalculate_intersections
@@ -46,9 +48,9 @@ def evaluate(individual: Component, env: Environment):
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
     if env.quality_criterion == "nsgaii":
-        return efficiency(individual.original_rays), illuminance_uniformity(segments_intensity), \
-               obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led), \
-               env.number_of_led*light_pollution(individual.original_rays)
+        return Fitness((efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
+                        obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
+                        env.number_of_led * light_pollution(individual.original_rays)))
     return efficiency(individual)
 
 
@@ -60,7 +62,8 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
 
     # Initiating evolutionary algorithm
-    creator.create("Fitness", base.Fitness, weights=(1.0,))
+    creator.create("Fitness", base.Fitness, weights=(1.0,1.0,1.0,1.0))
+    base.Fitness.weights = (1.0, 10.0, 5.0, 1.0)
     creator.create("Individual", Component, fitness=creator.Fitness)
     toolbox = base.Toolbox()
     toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays,
