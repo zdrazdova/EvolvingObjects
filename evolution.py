@@ -63,7 +63,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
     # Initiating evolutionary algorithm
     creator.create("Fitness", base.Fitness, weights=(1.0,1.0,1.0,1.0))
-    base.Fitness.weights = (1.0, 10.0, 5.0, 1.0)
+    base.Fitness.weights = (1.0, 1.0, 1.0, 1.0)
     creator.create("Individual", Component, fitness=creator.Fitness)
     toolbox = base.Toolbox()
     toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays,
@@ -125,23 +125,23 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                 if random.random() < xover_prob:
                     x_over_multiple_segments(child1, child2)
                     # fitness values of the children must be recalculated later
-                    child1.fitness = 0
-                    child2.fitness = 0
+                    child1.fitness = None
+                    child2.fitness = None
             if env.configuration == "two connected":
                 if random.random() < xover_prob:
                     x_over_two_segments(child1, child2)
                     # fitness values of the children must be recalculated later
-                    child1.fitness = 0
-                    child2.fitness = 0
+                    child1.fitness = None
+                    child2.fitness = None
 
         for mutant in offspring:
             if env.configuration == "multiple free":
                 if random.random() < shift_segment_prob:
                     mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "x")
-                    mutant.fitness = 0
+                    mutant.fitness = None
                 if random.random() < shift_segment_prob:
                     mutant.reflective_segments = shift_one_segment(mutant.reflective_segments, "y")
-                    mutant.fitness = 0
+                    mutant.fitness = None
                 if random.random() < rotate_segment_prob:
                     mutant.reflective_segments = rotate_one_segment(mutant.reflective_segments)
                     mutant.fitness = 0
@@ -158,22 +158,29 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                     mutant.fitness = 0
 
         # Evaluate the individuals with an invalid fitness
-        invalid_ind = [ind for ind in offspring if ind.fitness == 0]
+        #invalid_ind = [ind for ind in offspring if ind.fitness == 0]
+        #fitnesses = []
+        #for item in invalid_ind:
+        #    fitnesses.append(evaluate(item, env))
+        #for ind, fit in zip(invalid_ind, fitnesses):
+        #    ind.fitness = fit
+
         fitnesses = []
-        for item in invalid_ind:
+        for item in offspring:
             fitnesses.append(evaluate(item, env))
-        for ind, fit in zip(invalid_ind, fitnesses):
+        for ind, fit in zip(offspring, fitnesses):
             ind.fitness = fit
 
-        print(f"  Evaluated {len(invalid_ind)} individuals")
+        #print(f"  Evaluated {len(invalid_ind)} individuals")
         # The population is entirely replaced by the offspring
         #pop[:] = offspring
 
         #hof.update(pop)
 
-        pop = toolbox.select(pop + offspring, population_size)
-        hof.update(pop)
+        #pop = toolbox.select(pop + offspring, population_size)
+        pop = toolbox.select(offspring + pop, len(pop))
 
+        hof.update(pop)
         best_ind = hof[0]
 
         fitnesses = []
