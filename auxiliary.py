@@ -3,13 +3,12 @@ from typing import List
 
 from component import Component
 from environment import Environment
+from quality_assesment import illuminance_uniformity, light_pollution
 
 
 def log_stats_init(name: str, line: str):
     stats_name = "stats/log-" + str(name) + ".csv"
     with open(stats_name, "w") as f:
-        f.write(f"generation, best fitness, average fitness, fitness array, left segment angle, left segment length, "
-                f"right segment angle, right segment length  \n")
         f.write(line)
 
 
@@ -18,6 +17,28 @@ def log_stats_append(name: str, line: str):
     with open(stats_name, "a") as f:
         f.write('\n')
         f.write(line)
+
+
+def choose_unique(hof: List[Component]) -> List[Component]:
+    print(len(hof))
+    unique = [hof[0]]
+    for ind in hof:
+        exists = False
+        for uni in unique:
+            if ind.left_angle == uni.left_angle and ind.right_angle == uni.right_angle and \
+                    ind.left_length_coef == uni.left_length_coef and ind.right_length_coef == uni.right_length_coef:
+                exists = True
+        if not exists:
+            unique.append(ind)
+    selected = []
+    for uni in unique:
+        uniformity = illuminance_uniformity(uni.segments_intensity)
+        rays_upwards = light_pollution(uni.original_rays)
+        if uniformity > 0.2 and rays_upwards < 4:
+            selected.append(uni)
+    print(len(unique))
+    print(len(selected))
+    return unique
 
 
 def draw(ind: Component, name: str, env: Environment):
@@ -110,7 +131,7 @@ def draw(ind: Component, name: str, env: Environment):
                 .format(env.road.p1.x + x_offset, -env.road.p1.y + y_offset,
                         (env.road.p2.x - env.road.p1.x)))  # road
 
-        if env.quality_criterion == "illuminance uniformity" or env.quality_criterion == "all":
+        if env.quality_criterion in ["illuminance uniformity", "all", "nsgaii", "nsgaiii"]:
             left_border = env.road_start
             segments_size = env.road_length / env.road_sections
 
@@ -176,7 +197,7 @@ def draw(ind: Component, name: str, env: Environment):
         f.write('</svg>')
 
 
-def check_parameters_environment(base_length: int, base_slope: int, road_start: int, road_end: int, road_depth: int,
+def check_parameters_environment(road_start: int, road_end: int, road_depth: int,
                                  road_sections: int, criterion: str, cosine_error: str, reflective_factor: float,
                                  configuration: str, number_of_led: int, separating_distance: int,
                                  modification: str, weights: List[int], reflections_timeout: int) -> List[str]:
@@ -192,11 +213,6 @@ def check_parameters_environment(base_length: int, base_slope: int, road_start: 
         invalid.append("cosine error")
     if type(weights) != list or len(weights) != 4:
         invalid.append("weights")
-
-    if type(base_length) != int or base_length <= 0:
-        invalid.append("base length")
-    if type(base_slope) != int or 0 > base_slope or base_slope > 180:
-        invalid.append("base slope")
 
     if type(road_start) != int:
         invalid.append("road start")
@@ -227,13 +243,21 @@ def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle
                                no_of_reflective_segments: int, distance_limit: int, length_limit: int,
                                population_size: int, number_of_generations: int, xover_prob: float,
                                angle_mut_prob: float, length_mut_prob: float, shift_segment_prob: float,
-                               rotate_segment_prob: float, resize_segment_prob: float) -> List[str]:
+                               rotate_segment_prob: float, resize_segment_prob: float,
+                               tilt_base_prob, base_length: int, base_slope: int, base_angle_limit_min: int,
+                               base_angle_limit_max: int) -> List[str]:
     invalid = []
 
     if type(number_of_rays) != int or number_of_rays <= 0:
         invalid.append("number of rays")
     if ray_distribution not in ["uniform", "random"]:
         invalid.append("ray distribution")
+
+    if type(base_length) != int or base_length <= 0:
+        invalid.append("base length")
+    if type(base_slope) != int or 0 > base_slope or base_slope > 180:
+        invalid.append("base slope")
+
 
     if type(angle_lower_bound) != int or 90 > angle_lower_bound or angle_lower_bound > 180:
         invalid.append("angle lower bound")
@@ -243,6 +267,10 @@ def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle
         invalid.append("length lower bound")
     if type(length_upper_bound) != int or length_upper_bound <= length_lower_bound:
         invalid.append("length upper bound")
+    if type(base_angle_limit_min) != int or base_angle_limit_min < 0:
+        invalid.append("base angle limit min")
+    if type(base_angle_limit_max) != int or base_angle_limit_max <= base_angle_limit_min:
+        invalid.append("base angle limit max")
 
     if type(no_of_reflective_segments) != int or number_of_rays <= 0:
         invalid.append("no of reflective segments")
@@ -269,5 +297,7 @@ def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle
         invalid.append("rotate segment prob")
     if type(resize_segment_prob) != float or resize_segment_prob < 0 or resize_segment_prob > 1:
         invalid.append("resize segment prob")
+    if type(tilt_base_prob) != float or tilt_base_prob < 0 or tilt_base_prob > 1:
+        invalid.append("tilt base prob")
 
     return invalid

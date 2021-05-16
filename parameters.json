@@ -6,18 +6,20 @@
         "number_of_rays": 20,
 	"ray_distribution": "uniform",
         "base_length": 40,
-        "base_slope": 180,
+        "base_slope": 90,
 	"configuration": "multiple free",
 	"two_connected": {
-	    "angle_lower_bound": 90,
+	    "angle_lower_bound": 150,
                 "angle_upper_bound": 180,
                 "length_lower_bound": 1,
                 "length_upper_bound": 3
             },
         "multiple_free": {
-            "no_of_reflective_segments": 12,
+            "no_of_reflective_segments": 8,
             "distance_limit": 400,
-            "length_limit": 400
+            "length_limit": 400,
+            "base_angle_limit_min": 0,
+            "base_angle_limit_max": 180
         }
     },
     "road": {
@@ -27,22 +29,23 @@
 	    "sections": 4
     },
     "evolution": {
-        "population_size": 4,
-        "number_of_generations": 64,
+        "population_size": 12,
+        "number_of_generations": 48,
         "operators": {
             "mutation": {
                 "angle_mutation_prob": 0.4,
                 "length_mutation_prob": 0.4,
                 "segment_shift_prob": 0.4,
                 "segment_rotation_prob": 0.2,
-                "segment_resizing_prob": 0.4
+                "segment_resizing_prob": 0.4,
+                "tilt_base_prob": 0.2
             },
             "xover_prob": 0.4
         }
     },
     "evaluation": {
 	"reflective_factor" : 0.98,
-	"reflections_timeout": 4,
+	"reflections_timeout": 20,
 	"cosine_error": "no",
         "criterion": "nsgaii",
         "weights": [1,10,5,-1]

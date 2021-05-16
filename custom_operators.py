@@ -47,6 +47,14 @@ def resize_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
     return modified_segments
 
 
+def tilt_base(base_angle: int, base_angle_limit_min: int, base_angle_limit_max: int) -> int:
+    base_angle += random.randint(-10, 10)
+    base_angle = max(base_angle_limit_min, base_angle)
+    base_angle = min(base_angle_limit_max, base_angle)
+    return base_angle
+
+
+
 def x_over_multiple_segments(ind1: Component, ind2: Component) -> (Component, Component):
     length = len(ind1.reflective_segments)
     x_over_point = random.randint(1, length-1)

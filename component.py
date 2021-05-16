@@ -1,3 +1,4 @@
+import math
 import random
 from typing import List
 
@@ -13,23 +14,26 @@ class Component:
     def __init__(self, env: Environment, number_of_rays: int, ray_distribution: str,
                  angle_lower_bound: int, angle_upper_bound: int,
                  length_lower_bound: int, length_upper_bound: int,
-                 no_of_reflective_segments: int, distance_limit: int, length_limit: int):
+                 no_of_reflective_segments: int, distance_limit: int, length_limit: int,
+                 base_length: int, base_slope: int):
 
         self.origin = Point(0, 0)
+        self.base_slope = base_slope
+        self.base_length = base_length
+
+        self.calculate_base()
 
         # Sampling light rays for given base slope
-        self.original_rays = self.sample_rays(number_of_rays, ray_distribution, env.base_slope)
+        self.original_rays = self.sample_rays(number_of_rays, ray_distribution)
 
-        self.angle_limit_min = angle_lower_bound + env.base_slope
-        self.angle_limit_max = angle_upper_bound + env.base_slope
+        self.angle_limit_min = angle_lower_bound + base_slope
+        self.angle_limit_max = angle_upper_bound + base_slope
         self.right_angle = random.randint(self.angle_limit_min, self.angle_limit_max)
         self.left_angle = random.randint(self.angle_limit_min, self.angle_limit_max) - 90
 
         self.length_limit_diff = length_upper_bound - length_lower_bound
         self.left_length_coef = random.random() * self.length_limit_diff + length_lower_bound
         self.right_length_coef = random.random() * self.length_limit_diff + length_lower_bound
-
-        self.base = env.base
 
         if env.configuration == "two connected":
             self.right_segment = None
@@ -47,7 +51,12 @@ class Component:
         self.segments_intensity = []
         self.fitness_array = []
 
-    def sample_rays(self, number_of_rays: int, distribution: str, base_angle: int) -> List[MyRay]:
+    def calculate_base(self):
+        y_diff = round(self.base_length / 2 * math.sin(math.radians(self.base_slope)))
+        x_diff = round(self.base_length / 2 * math.cos(math.radians(self.base_slope)))
+        self.base = Segment(Point(-x_diff, -y_diff), Point(x_diff, y_diff))
+
+    def sample_rays(self, number_of_rays: int, distribution: str) -> List[MyRay]:
         """
         Sample given number of rays from LED according to base angle and distribution parameter.
 
@@ -56,6 +65,7 @@ class Component:
         :param base_angle: Angle of base for LED
         :return: List of rays from LED
         """
+        base_angle = self.base_slope
         ray_array = []
         if distribution == "uniform":
             step = 180 / number_of_rays
@@ -112,7 +122,7 @@ class Component:
 def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int):
     reflective_segments = []
     for index in range(number_of_segments):
-        origin = Point(random.randint(-distance_limit/2, distance_limit), random.randint(0, distance_limit))
+        origin = Point(random.randint(-distance_limit, distance_limit), random.randint(-distance_limit, distance_limit))
         end = Point(origin.x+random.randint(-length_limit, length_limit),
                     origin.y+random.randint(-length_limit, length_limit))
         segment = Segment(origin, end)

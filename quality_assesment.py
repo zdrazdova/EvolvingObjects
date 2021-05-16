@@ -34,6 +34,8 @@ def illuminance_uniformity(segments_intensity: List[float]) -> float:
 
 def obtrusive_light_elimination(all_rays: List[MyRay], road_intersections: List[Tuple[Rational, float, float]],
                                 number_of_led: int) -> float:
+    if sum_intensity(all_rays) == 0:
+        return 1
     intensity_on_road = intensity_of_intersections(road_intersections) / (sum_intensity(all_rays) * number_of_led)
     return intensity_on_road
 

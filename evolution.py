@@ -4,11 +4,12 @@ from typing import List
 
 from deap.base import Fitness
 
-from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution
+from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution, \
+    choose_unique
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments, recalculate_intersections
 from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
-    resize_one_segment, x_over_multiple_segments, x_over_two_segments
+    resize_one_segment, x_over_multiple_segments, x_over_two_segments, tilt_base
 from quality_assesment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light_elimination
 
 from deap import base
@@ -35,20 +36,20 @@ def evaluate(individual: Component, env: Environment):
                                                        env.modification, env.road_start, env.road_end)
     if env.quality_criterion == "obtrusive light":
         return obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led)
-    segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start,
+    individual.segments_intensity = compute_segments_intensity(road_intersections, env.road_sections, env.road_start,
                                                     env.road_length, env.cosine_error)
-    individual.segments_intensity_proportional = compute_proportional_intensity(segments_intensity)
+    individual.segments_intensity_proportional = compute_proportional_intensity(individual.segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
-        return illuminance_uniformity(segments_intensity)
+        return illuminance_uniformity(individual.segments_intensity)
     if env.quality_criterion == "weighted_sum":
-        individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
+        individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(individual.segments_intensity),
                                     obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
                                     env.number_of_led*light_pollution(individual.original_rays)]
         weights = env.weights
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
     if env.quality_criterion == "nsgaii":
-        return Fitness((efficiency(individual.original_rays), illuminance_uniformity(segments_intensity),
+        return Fitness((efficiency(individual.original_rays), illuminance_uniformity(individual.segments_intensity),
                         obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
                         env.number_of_led * light_pollution(individual.original_rays)))
     return efficiency(individual)
@@ -59,18 +60,20 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               no_of_reflective_segments: int, distance_limit: int, length_limit: int,
               population_size: int, number_of_generations: int,
               xover_prob: float, mut_angle_prob: float, mut_length_prob: float,
-              shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
+              shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float, tilt_base_prob: float,
+              base_length: int, base_slope: int, base_angle_limit_min: int, base_angle_limit_max: int):
 
     # Initiating evolutionary algorithm
     creator.create("Fitness", base.Fitness, weights=(1.0,))
-    base.Fitness.weights = (1.0, 1.0, 1.0, 1.0)
+    base.Fitness.weights = (1.0, 10.0, 5.0, -1.0)
     creator.create("Individual", Component, fitness=creator.Fitness)
     toolbox = base.Toolbox()
     toolbox.register("individual", creator.Individual, env=env, number_of_rays=number_of_rays,
                      ray_distribution=ray_distribution, angle_lower_bound=angle_lower_bound,
                      angle_upper_bound=angle_upper_bound, length_lower_bound=length_lower_bound,
                      length_upper_bound=length_upper_bound, no_of_reflective_segments=no_of_reflective_segments,
-                     distance_limit=distance_limit, length_limit=length_limit)
+                     distance_limit=distance_limit, length_limit=length_limit, base_length=base_length,
+                     base_slope=base_slope)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
     if env.quality_criterion == "nsgaii":
@@ -95,7 +98,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     #print("Drawing initial population finished")
 
     if env.quality_criterion != "nsgaii":
-        stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
+        if env.configuration == "two connected":
+            stats_line = f"generation, best fitness, average fitness, fitness array, left segment angle, " \
+                     f"left segment length, right segment angle, right segment length  \n"
+        else:
+            stats_line = f"generation, best fitness, average fitness, fitness array, reflective segments  \n"
         log_stats_init(f"stats", stats_line)
 
     # Initiating elitism
@@ -154,6 +161,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                 if random.random() < resize_segment_prob:
                     mutant.reflective_segments = resize_one_segment(mutant.reflective_segments)
                     mutant.fitness = None
+                if random.random() < tilt_base_prob:
+                    mutant.base_slope = tilt_base(mutant.base_slope, base_angle_limit_min, base_angle_limit_max)
+                    mutant.calculate_base()
+                    mutant.original_rays = mutant.sample_rays(number_of_rays, ray_distribution)
+                    mutant.fitness = None
 
             if env.configuration == "two connected":
                 if random.random() < mut_angle_prob:
@@ -171,7 +183,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness = fit
 
-
         if env.quality_criterion == "nsgaii":
             pop = toolbox.select(offspring + pop, population_size)
         else:
@@ -187,10 +198,10 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
 
         if env.configuration == "two connected" and env.quality_criterion != "nsgaii":
             stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
-                     f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
-                     f"left length: {best_ind.left_length_coef*env.base_length}, " \
-                     f"right angle: {best_ind.right_angle-env.base_slope}, " \
-                     f"right length: {best_ind.right_length_coef*env.base_length} "
+                     f"left angle: {180-best_ind.left_angle+best_ind.base_slope}, " \
+                     f"left length: {best_ind.left_length_coef*best_ind.base_length}, " \
+                     f"right angle: {best_ind.right_angle-best_ind.base_slope}, " \
+                     f"right length: {best_ind.right_length_coef*best_ind.base_length} "
             log_stats_append(f"stats", stats_line)
 
         if env.configuration == "multiple free" and env.quality_criterion != "nsgaii":
@@ -202,6 +213,20 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)
 
+    if env.quality_criterion == "nsgaii":
+        unique = choose_unique(hof)
+        stats_line = f"index, fitness array"
+        log_stats_init(f"stats", stats_line)
+        for index in range(len(unique)):
+            draw(unique[index], f"unique{index}-{len(unique)}", env)
+            if env.configuration == "two connected":
+                stats_line = f"{index}, {unique[index].fitness}," \
+                         f"left angle: {180-unique[index].left_angle+unique[index].base_slope}, " \
+                         f"left length: {unique[index].left_length_coef*unique[index].base_length}, " \
+                         f"right angle: {unique[index].right_angle-unique[index].base_slope}, " \
+                         f"right length: {unique[index].right_length_coef*unique[index].base_length} "
+            else: stats_line = f"{index}, {unique[index].fitness}, {unique[index].base_slope}"
+            log_stats_append(f"stats", stats_line)
     print("-- End of (successful) evolution --")
     print("--")
 
@@ -232,7 +257,7 @@ def main():
     separating_distance = config.lamp.separating_distance
     modification = config.lamp.modification
 
-    invalid_parameters = check_parameters_environment(base_length, base_slope, road_start, road_end, road_depth,
+    invalid_parameters = check_parameters_environment(road_start, road_end, road_depth,
                                                       road_sections, criterion, cosine_error, reflective_factor,
                                                       configuration, number_of_LEDs, separating_distance, modification,
                                                       weights, reflections_timeout)
@@ -242,7 +267,7 @@ def main():
     else:
         print(f" Environment parameters: ok")
     # Init environment
-    env = Environment(base_length, base_slope, road_start, road_end, road_depth, road_sections,
+    env = Environment(road_start, road_end, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration,
                       number_of_LEDs, separating_distance, modification, weights, reflections_timeout)
 
@@ -260,6 +285,8 @@ def main():
     no_of_reflective_segments = config.lamp.multiple_free.no_of_reflective_segments
     distance_limit = config.lamp.multiple_free.distance_limit
     length_limit = config.lamp.multiple_free.length_limit
+    base_angle_limit_min = config.lamp.multiple_free.base_angle_limit_min
+    base_angle_limit_max = config.lamp.multiple_free.base_angle_limit_max
 
 
     population_size = config.evolution.population_size
@@ -273,13 +300,15 @@ def main():
     shift_segment_prob = operators.mutation.segment_shift_prob
     rotate_segment_prob = operators.mutation.segment_rotation_prob
     resize_segment_prob = operators.mutation.segment_resizing_prob
+    tilt_base_prob = operators.mutation.tilt_base_prob
 
     invalid_parameters = check_parameters_evolution(number_of_rays, ray_distribution, angle_lower_bound,
                                                     angle_upper_bound, length_lower_bound, length_upper_bound,
                                                     no_of_reflective_segments, distance_limit, length_limit,
                                                     population_size, number_of_generations, xover_prob, angle_mut_prob,
                                                     length_mut_prob, shift_segment_prob, rotate_segment_prob,
-                                                    resize_segment_prob)
+                                                    resize_segment_prob, tilt_base_prob, base_length, base_slope,
+                                                    base_angle_limit_min, base_angle_limit_max)
     if invalid_parameters:
         print(f"Invalid value for parameters {invalid_parameters}")
         return
@@ -290,7 +319,8 @@ def main():
     evolution(env, number_of_rays, ray_distribution, angle_lower_bound, angle_upper_bound,
               length_lower_bound, length_upper_bound, no_of_reflective_segments, distance_limit, length_limit,
               population_size, number_of_generations, xover_prob, angle_mut_prob, length_mut_prob,
-              shift_segment_prob, rotate_segment_prob, resize_segment_prob)
+              shift_segment_prob, rotate_segment_prob, resize_segment_prob, tilt_base_prob, base_length, base_slope,
+              base_angle_limit_min, base_angle_limit_max)
 
 
 if __name__ == "__main__":
