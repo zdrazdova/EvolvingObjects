@@ -62,7 +62,7 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
               shift_segment_prob: float, rotate_segment_prob: float, resize_segment_prob: float):
 
     # Initiating evolutionary algorithm
-    creator.create("Fitness", base.Fitness, weights=(1.0,1.0,1.0,1.0))
+    creator.create("Fitness", base.Fitness, weights=(1.0,))
     base.Fitness.weights = (1.0, 1.0, 1.0, 1.0)
     creator.create("Individual", Component, fitness=creator.Fitness)
     toolbox = base.Toolbox()
@@ -73,8 +73,11 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                      distance_limit=distance_limit, length_limit=length_limit)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     toolbox.register("evaluate", evaluate)
-    #toolbox.register("select", tools.selTournament, tournsize=2)
-    toolbox.register("select", tools.selNSGA2)
+    if env.quality_criterion == "nsgaii":
+        toolbox.register("select", tools.selNSGA2)
+    else:
+        toolbox.register("select", tools.selTournament, tournsize=2)
+
 
     # Initiating first population
     pop = toolbox.population(n=population_size)
@@ -87,20 +90,23 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         ind.fitness = fit
 
     # Rendering individuals in initial population as images
-    for i in range(len(pop)):
-        draw(pop[i], f"{i}", env)
-    print("Drawing initial population finished")
+    #for i in range(len(pop)):
+    #    draw(pop[i], f"{i}", env)
+    #print("Drawing initial population finished")
 
-    #stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
-    #log_stats_init(f"stats", stats_line)
+    if env.quality_criterion != "nsgaii":
+        stats_line = f"0, {max(fitnesses)}, {sum(fitnesses)/population_size}"
+        log_stats_init(f"stats", stats_line)
 
     # Initiating elitism
-    #hof = HallOfFame(1)
-    #hof.update(pop)
 
-    pop = toolbox.select(pop, len(pop))
-    hof = tools.ParetoFront()
-    hof.update(pop)
+    if env.quality_criterion == "nsgaii":
+        pop = toolbox.select(pop, len(pop))
+        hof = tools.ParetoFront()
+        hof.update(pop)
+    else:
+        hof = HallOfFame(1)
+        hof.update(pop)
 
     print("Start of evolution")
 
@@ -110,12 +116,12 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         print(f"-- Generation {g} --")
 
         # Select the next generation individuals
-        #offspring = toolbox.select(pop, len(pop))
-        # Clone the selected individuals
-        #offspring = list(map(toolbox.clone, offspring))
-
-        offspring = tools.selTournamentDCD(pop, len(pop))
-        offspring = [toolbox.clone(ind) for ind in offspring]
+        if env.quality_criterion == "nsgaii":
+            offspring = tools.selTournamentDCD(pop, len(pop))
+            offspring = [toolbox.clone(ind) for ind in offspring]
+        else:
+            offspring = toolbox.select(pop, len(pop))
+            offspring = list(map(toolbox.clone, offspring))
 
         # Apply crossover and mutation on the offspring
 
@@ -144,62 +150,55 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
                     mutant.fitness = None
                 if random.random() < rotate_segment_prob:
                     mutant.reflective_segments = rotate_one_segment(mutant.reflective_segments)
-                    mutant.fitness = 0
+                    mutant.fitness = None
                 if random.random() < resize_segment_prob:
                     mutant.reflective_segments = resize_one_segment(mutant.reflective_segments)
-                    mutant.fitness = 0
+                    mutant.fitness = None
 
             if env.configuration == "two connected":
                 if random.random() < mut_angle_prob:
                     mutate_angle(mutant)
-                    mutant.fitness = 0
+                    mutant.fitness = None
                 if random.random() < mut_length_prob:
                     mutate_length(mutant, length_upper_bound, length_lower_bound)
-                    mutant.fitness = 0
+                    mutant.fitness = None
 
         # Evaluate the individuals with an invalid fitness
-        #invalid_ind = [ind for ind in offspring if ind.fitness == 0]
-        #fitnesses = []
-        #for item in invalid_ind:
-        #    fitnesses.append(evaluate(item, env))
-        #for ind, fit in zip(invalid_ind, fitnesses):
-        #    ind.fitness = fit
-
+        invalid_ind = [ind for ind in offspring if ind.fitness is None]
         fitnesses = []
-        for item in offspring:
+        for item in invalid_ind:
             fitnesses.append(evaluate(item, env))
-        for ind, fit in zip(offspring, fitnesses):
+        for ind, fit in zip(invalid_ind, fitnesses):
             ind.fitness = fit
 
-        #print(f"  Evaluated {len(invalid_ind)} individuals")
-        # The population is entirely replaced by the offspring
-        #pop[:] = offspring
 
-        #hof.update(pop)
-
-        #pop = toolbox.select(pop + offspring, population_size)
-        pop = toolbox.select(offspring + pop, len(pop))
+        if env.quality_criterion == "nsgaii":
+            pop = toolbox.select(offspring + pop, population_size)
+        else:
+            pop[:] = offspring
 
         hof.update(pop)
         best_ind = hof[0]
 
         fitnesses = []
         for item in pop:
-            fitnesses.append(evaluate(item, env))
+            fitnesses.append(item.fitness)
         print(fitnesses)
 
-        #if env.configuration == "two connected":
-        #    stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
-        #             f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
-        #             f"left_length: {best_ind.left_length_coef*env.base_length}, " \
-        #             f"right angle: {best_ind.right_angle-env.base_slope}, " \
-        #             f"left_length: {best_ind.right_length_coef*env.base_length} "
-        #if env.configuration == "multiple free":
-        #    stats_line = f"{g + 1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, "
-        #    for reflective_segment in best_ind.reflective_segments:
-        #        dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
-        #        stats_line = stats_line + dimensions
-        #log_stats_append(f"stats", stats_line)
+        if env.configuration == "two connected" and env.quality_criterion != "nsgaii":
+            stats_line = f"{g+1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, " \
+                     f"left angle: {180-best_ind.left_angle+env.base_slope}, " \
+                     f"left length: {best_ind.left_length_coef*env.base_length}, " \
+                     f"right angle: {best_ind.right_angle-env.base_slope}, " \
+                     f"right length: {best_ind.right_length_coef*env.base_length} "
+            log_stats_append(f"stats", stats_line)
+
+        if env.configuration == "multiple free" and env.quality_criterion != "nsgaii":
+            stats_line = f"{g + 1}, {best_ind.fitness}, {sum(fitnesses) / population_size}, {best_ind.fitness_array}, "
+            for reflective_segment in best_ind.reflective_segments:
+                dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
+                stats_line = stats_line + dimensions
+            log_stats_append(f"stats", stats_line)
         print(f"Best individual has fitness: {best_ind.fitness}")
         draw(best_ind, f"best{g}", env)
 
