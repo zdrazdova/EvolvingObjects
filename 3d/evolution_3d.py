@@ -10,7 +10,7 @@ from custom_geometry import compute_intersections, compute_reflections_two_segme
 from custom_geometry_3d import compute_intersections_3d, compute_reflections_multiple_planes
 from custom_operators import mate, mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment
-from quality_assesment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
+from quality_assessment import glare_reduction, efficiency, illuminance_uniformity, light_pollution
 
 from deap import base
 from deap import creator

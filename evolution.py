@@ -10,7 +10,7 @@ from custom_geometry import compute_intersections, compute_reflections_two_segme
     compute_reflection_multiple_segments, recalculate_intersections
 from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
     resize_one_segment, x_over_multiple_segments, x_over_two_segments, tilt_base
-from quality_assesment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light_elimination
+from quality_assessment import efficiency, illuminance_uniformity, light_pollution, obtrusive_light_elimination
 
 from deap import base
 from deap import creator
@@ -41,10 +41,10 @@ def evaluate(individual: Component, env: Environment):
     individual.segments_intensity_proportional = compute_proportional_intensity(individual.segments_intensity)
     if env.quality_criterion == "illuminance uniformity":
         return illuminance_uniformity(individual.segments_intensity)
-    if env.quality_criterion == "weighted_sum":
+    if env.quality_criterion == "weighted sum":
         individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(individual.segments_intensity),
                                     obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
-                                    env.number_of_led*light_pollution(individual.original_rays)]
+                                    -env.number_of_led*light_pollution(individual.original_rays)]
         weights = env.weights
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
         return sum(product)
@@ -214,18 +214,22 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         draw(best_ind, f"best{g}", env)
 
     if env.quality_criterion == "nsgaii":
-        unique = choose_unique(hof)
+        unique = choose_unique(hof, env.configuration)
         stats_line = f"index, fitness array"
         log_stats_init(f"stats", stats_line)
         for index in range(len(unique)):
-            draw(unique[index], f"unique{index}-{len(unique)}", env)
+            draw(unique[index], f"unique{index}", env)
             if env.configuration == "two connected":
                 stats_line = f"{index}, {unique[index].fitness}," \
                          f"left angle: {180-unique[index].left_angle+unique[index].base_slope}, " \
                          f"left length: {unique[index].left_length_coef*unique[index].base_length}, " \
                          f"right angle: {unique[index].right_angle-unique[index].base_slope}, " \
                          f"right length: {unique[index].right_length_coef*unique[index].base_length} "
-            else: stats_line = f"{index}, {unique[index].fitness}, {unique[index].base_slope}"
+            else:
+                stats_line = f"{index}, {unique[index].fitness}, {unique[index].base_slope}"
+                for reflective_segment in unique[index].reflective_segments:
+                    dimensions = f" start: {reflective_segment.p1}, end: {reflective_segment.p2}"
+                    stats_line = stats_line + dimensions
             log_stats_append(f"stats", stats_line)
     print("-- End of (successful) evolution --")
     print("--")

@@ -3,7 +3,7 @@ from typing import List
 
 from component import Component
 from environment import Environment
-from quality_assesment import illuminance_uniformity, light_pollution
+from quality_assessment import illuminance_uniformity, light_pollution
 
 
 def log_stats_init(name: str, line: str):
@@ -19,15 +19,18 @@ def log_stats_append(name: str, line: str):
         f.write(line)
 
 
-def choose_unique(hof: List[Component]) -> List[Component]:
-    print(len(hof))
+def choose_unique(hof: List[Component], configuration) -> List[Component]:
     unique = [hof[0]]
     for ind in hof:
         exists = False
         for uni in unique:
-            if ind.left_angle == uni.left_angle and ind.right_angle == uni.right_angle and \
+            if configuration == "two connected":
+                if ind.left_angle == uni.left_angle and ind.right_angle == uni.right_angle and \
                     ind.left_length_coef == uni.left_length_coef and ind.right_length_coef == uni.right_length_coef:
-                exists = True
+                    exists = True
+            else:
+                if ind.reflective_segments == uni.reflective_segments and ind.base == uni.base:
+                    exists = True
         if not exists:
             unique.append(ind)
     selected = []
@@ -36,7 +39,6 @@ def choose_unique(hof: List[Component]) -> List[Component]:
         rays_upwards = light_pollution(uni.original_rays)
         if uniformity > 0.2 and rays_upwards < 4:
             selected.append(uni)
-    print(len(unique))
     print(len(selected))
     return unique
 
@@ -131,7 +133,7 @@ def draw(ind: Component, name: str, env: Environment):
                 .format(env.road.p1.x + x_offset, -env.road.p1.y + y_offset,
                         (env.road.p2.x - env.road.p1.x)))  # road
 
-        if env.quality_criterion in ["illuminance uniformity", "all", "nsgaii", "nsgaiii"]:
+        if env.quality_criterion in ["illuminance uniformity", "weighted sum", "nsgaii"]:
             left_border = env.road_start
             segments_size = env.road_length / env.road_sections
 
@@ -207,7 +209,7 @@ def check_parameters_environment(road_start: int, road_end: int, road_depth: int
         invalid.append("configuration")
     if modification not in ["mirror", "shift"]:
         invalid.append("modification")
-    if criterion not in ["all", "efficiency", "illuminance uniformity", "obtrusive light", "weighted_sum", "nsgaii"]:
+    if criterion not in ["efficiency", "illuminance uniformity", "obtrusive light", "weighted sum", "nsgaii"]:
         invalid.append("criterion")
     if cosine_error not in ["yes", "no"]:
         invalid.append("cosine error")
