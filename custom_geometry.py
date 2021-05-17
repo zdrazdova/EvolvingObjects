@@ -8,16 +8,14 @@ from component import Component
 from custom_ray import MyRay
 
 
-def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -> List[Tuple[Rational, float, float]]:
+def compute_intersections(rays: List[MyRay], road: Segment) -> List[Tuple[Rational, float, float]]:
     """
     Compute intersections of rays from LED and road below the lamp. Zip x coordinates of each intersection
-    with intensity of the ray. If cosine_error has value "yes" multiply intensity by reduction caused by the angle
-    of incident ray and the road.
+    with intensity of the ray and intensity with taking cosine error into account.
 
     :param rays: List of rays directed from LED
     :param road: Segment representing road that rays should fall on
-    :param cosine_error: yes/no indicator whether to work with cosine error or not
-    :return: List of tuples (x-coord of road intersection, intensity of incident ray)
+    :return: List of tuples (x-coord of road intersection, intensity of incident ray, intensity with cosine error)
     """
     inter_array = []
     for ray in rays:
@@ -32,8 +30,21 @@ def compute_intersections(rays: List[MyRay], road: Segment, cosine_error: str) -
     return inter_array
 
 
-def recalculate_intersections(intersections: List[Tuple[Rational, float]], number_of_led: int, separating_distance: int,
-                              modification: str, road_start: int, road_end: int) -> List[Tuple[Rational, float]]:
+def recalculate_intersections(intersections: List[Tuple[Rational, float, float]], number_of_led: int,
+                              separating_distance: int, modification: str, road_start: int, road_end: int) \
+                            -> List[Tuple[Rational, float, float]]:
+    """
+    Recalculate intersections for situations with more than one LED. The function works either with mirror or
+     shift modification.
+
+    :param intersections: List of tuples (x-coord of road intersection, intensity, intensity with cosine error)
+    :param number_of_led: Number of LED in the device
+    :param separating_distance: Distance separating LEDs
+    :param modification: Indicator whether the LEDs are mirrored or shifted only
+    :param road_start: Coordinates for start of the road
+    :param road_end: Coordinates for end of the road
+    :return: List of tuples (x-coord of road intersection, intensity, intensity with cosine error) for all LEDs
+    """
     recalculated = []
     if modification == "mirror":
         for i in intersections:
@@ -44,8 +55,8 @@ def recalculate_intersections(intersections: List[Tuple[Rational, float]], numbe
                 recalculated.append(new_intersection)
     else:
         for i in intersections:
-            for l in range(number_of_led):
-                new_x = i[0] + separating_distance * l
+            for led in range(number_of_led):
+                new_x = i[0] + separating_distance * led
                 if road_start <= new_x <= road_end:
                     new_intersection = (new_x, i[1], i[2])
                     recalculated.append(new_intersection)
@@ -58,8 +69,8 @@ def compute_reflection(ray: Ray, surface: Segment, intensity: float, reflective_
 
     :param ray: Ray that should be reflected
     :param surface: Reflective surface segment
-    :param intensity:
-    :param reflective_factor:
+    :param intensity: Intensity of given ray
+    :param reflective_factor: Reflective factor of the material
     :return: Reflected ray
     """
     all_intersections = ray.intersection(surface)
@@ -104,15 +115,14 @@ def compute_reflection_segment(ray_array, segment, previous_intersection, ray_in
 
 def compute_reflection_segment_simple(ray_array, segment, ray_intensity, r_factor):
     """
-    Compute reflection of last part of the ray from given segment. If there is an intersection of ray and segment,
-    compute reflected ray, update ray intensity, update ray array. If there is not, return False and original values.
+    Compute reflection of last part of the ray from given segment. This function is used in scenario with
+     multiple reflective segments.
 
-    :param ray_array: array representing parts of ray
-    :param segment: segment that the ray should reflect from
-    :param previous_intersection: previous intersection of given ray on this segment
-    :param ray_intensity: intensity of ray before reflection
-    :param r_factor: reflective factor
-    :return: True/False whether the ray was reflected, possibly updated ray array, previous intersection and intensity
+    :param ray_array: Array representing parts of ray
+    :param segment: Segment that the ray should reflect from
+    :param ray_intensity: Intensity of ray before reflection
+    :param r_factor: Reflective factor of the material
+    :return: Updated ray array and intensity
     """
     last_ray = ray_array[-1]
     intersection = segment.intersection(last_ray)
@@ -126,6 +136,14 @@ def compute_reflection_segment_simple(ray_array, segment, ray_intensity, r_facto
 
 
 def compute_reflection_multiple_segments(ind: Component, r_factor: float, r_timeout):
+    """
+    For each ray compute reflections from all segments. First find closest segment, then calculate reflection from
+    the segment a then continue to find new closest segment. If there is no intersection with any of the segments, stop.
+
+    :param ind: Individual
+    :param r_factor: Reflective factor of the material
+    :param r_timeout: Reflections timeout from parameters
+    """
     for ray in ind.original_rays:
         ray_intensity = ray.original_intensity
         ray.ray_array = [ray.ray]
@@ -145,13 +163,14 @@ def compute_reflection_multiple_segments(ind: Component, r_factor: float, r_time
         ray.intensity = ray_intensity
 
 
-
 def compute_reflections_two_segments(ind: Component, r_factor: float):
     """
+    Compute reflections for all rays in scenario with two segments.
+    For each ray compute reflections from right and left segment. Continue while there exist any.
+    Reflections are recorder in ray_array from each ray
 
-    :param ind:
-    :param r_factor:
-    :return:
+    :param ind: Individual
+    :param r_factor: Reflective factor from parameters
     """
     ind.compute_right_segment()
     ind.compute_left_segment()
@@ -180,17 +199,24 @@ def prepare_intersections(points: List[Tuple[Rational, float, float]]) -> List[T
     """
     Prepare a list of tuples sorted according to first items which are also converted to float
 
-    :param points: List of tuples (x-coord of road intersection, intensity of incident ray)
-    :return: List of tuples (x-coord to float, intensity of incident ray) sorted according to first item
+    :param points: List of tuples (x-coord of road intersection, intensity of incident ray, intensity with cosine error)
+    :return: List of tuples (x-coord to float, intensity, intensity with cosine error) sorted according to first item
     """
     return sorted([(float(x), y, z) for x, y, z in points])
 
 
-def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment):
+def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment) -> Segment:
+    """
+    Find closest segment for given ray
+
+    :param segments: List of segments
+    :param ray: Ray
+    :param last_reflection: Segment of last reflection
+    :return: Closest segment
+    """
     intersection_dict = {}
     for segment in segments:
         intersection = ray.intersection(segment)
-        #print(segment, last_reflection)
         if intersection and segment != last_reflection:
             ray_segment = Segment(ray.p1, intersection[0])
             length = ray_segment.length
@@ -203,6 +229,13 @@ def closest_segment(segments: List[Segment], ray: Ray, last_reflection: Segment)
 
 
 def rotate_segment(segment: Segment, angle: int) -> Segment:
+    """
+    Rotate segment clockwise or counterclockwise according to given angle
+
+    :param segment: Reflective segment
+    :param angle: Angle for rotation (in degrees)
+    :return: Rotated segment
+    """
     a = [segment.p1.x, segment.p1.y]
     b = [segment.p2.x, segment.p2.y]
 
@@ -232,6 +265,13 @@ def rotate_segment(segment: Segment, angle: int) -> Segment:
 
 
 def change_size_segment(segment: Segment, coefficient: float) -> Segment:
+    """
+    Change size of a segment according to give coefficient
+
+    :param segment: Reflective segment
+    :param coefficient: Coefficient for resizing
+    :return: Resized segment
+    """
     a = [segment.p1.x, segment.p1.y]
     b = [segment.p2.x, segment.p2.y]
 

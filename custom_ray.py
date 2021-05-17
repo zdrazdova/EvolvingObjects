@@ -19,4 +19,5 @@ class MyRay:
         # Array used for storing segments of reflected ray
         self.ray_array = [Ray(origin, Point(x_coordinate, y_coordinate))]
         self.road_intersection = []
+        # If the ray is reflected too many time or if it is reflected back into the device, it will be terminated
         self.terminated = False

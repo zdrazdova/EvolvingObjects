@@ -21,9 +21,10 @@ class Component:
         self.base_slope = base_slope
         self.base_length = base_length
 
+        self.base = None
         self.calculate_base()
 
-        # Sampling light rays for given base slope
+        # Sampling light rays
         self.original_rays = self.sample_rays(number_of_rays, ray_distribution)
 
         self.angle_limit_min = angle_lower_bound + base_slope
@@ -62,11 +63,11 @@ class Component:
 
         :param number_of_rays: Number of rays going from LED
         :param distribution: random vs uniform distribution - random is default
-        :param base_angle: Angle of base for LED
         :return: List of rays from LED
         """
         base_angle = self.base_slope
         ray_array = []
+        step = 1
         if distribution == "uniform":
             step = 180 / number_of_rays
         for ray in range(number_of_rays):
@@ -81,7 +82,6 @@ class Component:
     def compute_right_segment(self):
         """
         Computing coordinates for right segment based on right angle and base info
-        :return:
         """
         base_right_p = self.base.points[1]
         right_ray = Ray(base_right_p, angle=self.right_angle/180 * pi)
@@ -119,7 +119,15 @@ class Component:
         self.left_segment = Segment(base_left_p, Point(float(left_end_x), float(left_end_y)))
 
 
-def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int):
+def generate_reflective_segments(number_of_segments: int, distance_limit: int, length_limit: int) -> List[Segment]:
+    """
+    Generating list of reflective segment for one individual according to given parameters
+
+    :param number_of_segments: Number of reflective segments
+    :param distance_limit: Max distance of start of a segment form origin (for one axis)
+    :param length_limit: Max length limit (for one axis)
+    :return: List of reflective segments
+    """
     reflective_segments = []
     for index in range(number_of_segments):
         origin = Point(random.randint(-distance_limit, distance_limit), random.randint(-distance_limit, distance_limit))
@@ -129,6 +137,3 @@ def generate_reflective_segments(number_of_segments: int, distance_limit: int, l
 
         reflective_segments.append(segment)
     return reflective_segments
-
-
-

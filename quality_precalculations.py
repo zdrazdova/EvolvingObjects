@@ -51,10 +51,12 @@ def compute_segments_intensity(road_intersections: List[Tuple[Rational, float, f
     """
     Compute sum of intensity of incidents rays for each segment
 
-    :param intersections_on: List of tuples (x-coord of road intersection, intensity of incident ray)
+    :param road_intersections: List of tuples (x-coord of road intersection, intensity of incident ray,
+    intensity with cosine error)
     :param road_sections: Number of road sections
     :param road_start: X coordinate of start of the road
     :param road_length: Length of the road
+    :cosine_error: yes/no indicator whether to work with cosine error
     :return: List of intensity of incident rays of each road segment
     """
     segments_size = road_length / road_sections

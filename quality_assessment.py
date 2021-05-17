@@ -34,6 +34,14 @@ def illuminance_uniformity(segments_intensity: List[float]) -> float:
 
 def obtrusive_light_elimination(all_rays: List[MyRay], road_intersections: List[Tuple[Rational, float, float]],
                                 number_of_led: int) -> float:
+    """
+    Compute what fraction of light is directed on the road.
+
+    :param all_rays:List of all rays from LED
+    :param road_intersections:  List of tuples(x-coordinate of intersection, intensity, intensity with cosine error)
+    :param number_of_led: Number of LEDs in the device
+    :return: The fraction of the light that falls on the road
+    """
     if sum_intensity(all_rays) == 0:
         return 1
     intensity_on_road = intensity_of_intersections(road_intersections) / (sum_intensity(all_rays) * number_of_led)
@@ -44,7 +52,7 @@ def light_pollution(individual_rays: List[List[Segment]]) -> int:
     """
     Compute light pollution that is a result of using Component
 
-    :param individual_rays:
+    :param individual_rays: List of lists of rays
     :return: The amount of rays that are misdirected
     """
     return rays_upwards([ray.ray_array for ray in individual_rays])

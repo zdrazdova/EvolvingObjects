@@ -30,7 +30,7 @@ def evaluate(individual: Component, env: Environment):
         compute_reflection_multiple_segments(individual, env.reflective_factor, env.reflections_timeout)
     if env.quality_criterion == "efficiency":
         return efficiency(individual.original_rays)
-    road_intersections = compute_intersections(individual.original_rays, env.road, env.cosine_error)
+    road_intersections = compute_intersections(individual.original_rays, env.road)
     if env.number_of_led > 1:
         road_intersections = recalculate_intersections(road_intersections, env.number_of_led, env.separating_distance,
                                                        env.modification, env.road_start, env.road_end)

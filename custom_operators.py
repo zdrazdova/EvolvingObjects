@@ -8,6 +8,13 @@ from custom_geometry import rotate_segment, change_size_segment
 
 
 def shift_one_segment(reflective_segments: List[Segment], axis: str) -> List[Segment]:
+    """
+    Shift one segment from list of reflective segments of an individual
+
+    :param reflective_segments: List of all reflective segments of one individual
+    :param axis: Indicator whether to use X-axis or Y-axis
+    :return: List of all reflective segments with one shifted
+    """
     chosen_segment_index = random.randint(0, len(reflective_segments)-1)
     chosen_segment = reflective_segments[chosen_segment_index]
     shift_amount = random.randint(-100, 100)
@@ -24,6 +31,12 @@ def shift_one_segment(reflective_segments: List[Segment], axis: str) -> List[Seg
 
 
 def rotate_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
+    """
+    Rotate one segment from list of reflective segments of an individual
+
+    :param reflective_segments: List of all reflective segments of one individual
+    :return: List of all reflective segments with one rotated
+    """
     chosen_segment_index = random.randint(0, len(reflective_segments)-1)
     chosen_segment = reflective_segments[chosen_segment_index]
     shift_amount = random.randint(-30, 30)
@@ -35,6 +48,12 @@ def rotate_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
 
 
 def resize_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
+    """
+    Resize one segment from list of reflective segments of an individual
+
+    :param reflective_segments: List of all reflective segments of one individual
+    :return: List of all reflective segments with one resized
+    """
     chosen_segment_index = random.randint(0, len(reflective_segments)-1)
     chosen_segment = reflective_segments[chosen_segment_index]
     change_size_coefficient = random.random()*2
@@ -48,14 +67,29 @@ def resize_one_segment(reflective_segments: List[Segment]) -> List[Segment]:
 
 
 def tilt_base(base_angle: int, base_angle_limit_min: int, base_angle_limit_max: int) -> int:
+    """
+    Modify base angle. In the new value is outside of limit, replace is by given limit.
+
+    :param base_angle: Original base angle
+    :param base_angle_limit_min: Lower bound for base angle
+    :param base_angle_limit_max: Upper bound for base angle
+    :return: Modified base angle
+    """
     base_angle += random.randint(-10, 10)
     base_angle = max(base_angle_limit_min, base_angle)
     base_angle = min(base_angle_limit_max, base_angle)
     return base_angle
 
 
-
 def x_over_multiple_segments(ind1: Component, ind2: Component) -> (Component, Component):
+    """
+    Perform crossover of two individuals. Split the lists of reflective segments at randomly selected point
+    and concatenate two parts from two individuals.
+
+    :param ind1: First individual
+    :param ind2: Second individual
+    :return: Tuple of individuals with crossover of reflective segments
+    """
     length = len(ind1.reflective_segments)
     x_over_point = random.randint(1, length-1)
     new_list_1 = ind1.reflective_segments[:x_over_point] + ind2.reflective_segments[x_over_point:]
@@ -66,6 +100,14 @@ def x_over_multiple_segments(ind1: Component, ind2: Component) -> (Component, Co
 
 
 def mutate_length(individual: Component, length_upper_bound: int, length_lower_bound: int) -> Component:
+    """
+    Modify length of both segments of an individual
+
+    :param individual: Individual to be modified
+    :param length_upper_bound: Upper bound for segment length
+    :param length_lower_bound: Lower bound for segment length
+    :return: Individual with modified lengths of two segments
+    """
     individual.left_length_coef += random.uniform(-0.1, 0.1)
     individual.right_length_coef += random.uniform(-0.1, 0.1)
     individual.left_length_coef = min(individual.left_length_coef, length_upper_bound)
@@ -76,6 +118,12 @@ def mutate_length(individual: Component, length_upper_bound: int, length_lower_b
 
 
 def mutate_angle(individual: Component) -> Component:
+    """
+    Modify angle of both segments of an individual
+
+    :param individual: Individual to be modified
+    :return: Individual with modified angles of two segments
+    """
     individual.right_angle += random.randint(-10, 10)
     individual.right_angle = max(individual.angle_limit_min, individual.right_angle)
     individual.right_angle = min(individual.angle_limit_max, individual.right_angle)
@@ -86,6 +134,13 @@ def mutate_angle(individual: Component) -> Component:
 
 
 def x_over_two_segments(ind1: Component, ind2: Component) -> (Component, Component):
+    """
+    Perform crossover of two individuals. Swap one of the two segments.
+
+    :param ind1: First individual
+    :param ind2: Second individual
+    :return: Tuple of individuals with crossover of reflective segments
+    """
     dummy_angle = ind1.right_angle
     ind1.right_angle = ind2.right_angle
     ind2.right_angle = dummy_angle

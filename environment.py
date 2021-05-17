@@ -1,7 +1,6 @@
-import math
 from typing import List
 
-from sympy import Point, Segment, Polygon, Plane
+from sympy import Point, Segment
 
 
 class Environment:

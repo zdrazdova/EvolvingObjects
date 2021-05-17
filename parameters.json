@@ -47,7 +47,7 @@
 	"reflective_factor" : 0.98,
 	"reflections_timeout": 20,
 	"cosine_error": "no",
-        "criterion": "weighted sum",
+        "criterion": "efficiency",
         "weights": [1,10,5,-1]
     }
 }
