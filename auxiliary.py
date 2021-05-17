@@ -3,16 +3,28 @@ from typing import List
 
 from component import Component
 from environment import Environment
-from quality_assessment import illuminance_uniformity, light_pollution
 
 
 def log_stats_init(name: str, line: str):
+    """
+    Init logs with given name and first line. Format of stats is .csv
+
+    :param name: File name
+    :param line: First line of stats file
+    """
     stats_name = "stats/log-" + str(name) + ".csv"
     with open(stats_name, "w") as f:
         f.write(line)
 
 
 def log_stats_append(name: str, line: str):
+    """
+    Append given line to file marked by given name
+
+    :param name: File name
+    :param line: Stats info
+    :return:
+    """
     stats_name = "stats/log-" + str(name) + ".csv"
     with open(stats_name, "a") as f:
         f.write('\n')
@@ -20,30 +32,37 @@ def log_stats_append(name: str, line: str):
 
 
 def choose_unique(hof: List[Component], configuration) -> List[Component]:
+    """
+    Choose unique individuals from list hof (Hall of fame)
+
+    :param hof: List of individuals in Hall of fame
+    :param configuration: Configuration - two connected or multiple free
+    :return: List of unique Individuals from Hall of fame
+    """
     unique = [hof[0]]
     for ind in hof:
         exists = False
         for uni in unique:
             if configuration == "two connected":
-                if ind.left_angle == uni.left_angle and ind.right_angle == uni.right_angle and \
-                    ind.left_length_coef == uni.left_length_coef and ind.right_length_coef == uni.right_length_coef:
+                if ind.left_angle == uni.left_angle and ind.right_angle == uni.right_angle and\
+                        ind.left_length_coef == uni.left_length_coef and ind.right_length_coef == uni.right_length_coef:
                     exists = True
             else:
                 if ind.reflective_segments == uni.reflective_segments and ind.base == uni.base:
                     exists = True
         if not exists:
             unique.append(ind)
-    selected = []
-    for uni in unique:
-        uniformity = illuminance_uniformity(uni.segments_intensity)
-        rays_upwards = light_pollution(uni.original_rays)
-        if uniformity > 0.2 and rays_upwards < 4:
-            selected.append(uni)
-    print(len(selected))
     return unique
 
 
 def draw(ind: Component, name: str, env: Environment):
+    """
+    Create SVG image that represent in individual in environment.
+
+    :param ind: Individual
+    :param name: File name
+    :param env: Environment for th individual
+    """
     svg_name = "img/img-" + str(name).zfill(2) + ".svg".format(name)
     # Generating drawing in SVG format
     with open(svg_name, "w") as f:
@@ -55,83 +74,86 @@ def draw(ind: Component, name: str, env: Environment):
         width = env.road_end + x_offset + 1000
         height = abs(env.road_depth) + 2000
         diag = math.sqrt(width*width + height*height)
-        f.write(
-            '<svg width="{0}" height="{1}">'.format(env.road_end + x_offset + 1000, abs(env.road_depth) + 2000))
-        f.write('<rect width="{0}" height="{1}" fill="black"/>'.format(env.road_end + x_offset + 1000,
-                                                                       abs(env.road_depth) + 2000))
 
+        # Initiate svg image and draw background
+        f.write(f'<svg width="{env.road_end + x_offset + 1000}" height="{abs(env.road_depth) + 2000}">\n')
+        f.write(f'<rect width="{env.road_end + x_offset + 1000}" height="{abs(env.road_depth) + 2000}" '
+                f'fill="black"/>\n')
+
+        # Draw rays with all reflections
         for ray in ind.original_rays:
             array = ray.ray_array
             alpha = str(round(ray.intensity, 3))
             color = "(250, 216, 22)"
+            # Draw all ray segments except the last one
             for r in array[:-1]:
-                f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                float(r.points[1].x) + x_offset, - float(r.points[1].y) + y_offset, color, alpha))
+                f.write(f'<line x1="{float(r.points[0].x) + x_offset}" y1="{- float(r.points[0].y) + y_offset}" '
+                        f'x2="{float(r.points[1].x) + x_offset}" y2="{- float(r.points[1].y) + y_offset}" '
+                        f'style="stroke:rgb{color};stroke-opacity:{alpha};stroke-width:10"/>\n')
                 if env.modification == "mirror":
-                    f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
-                                -float(r.points[1].x) + x_offset- separating_distance, - float(r.points[1].y) + y_offset, color, alpha))
+                    f.write(f'<line x1="{-float(r.points[0].x) + x_offset - separating_distance}" '
+                            f'y1="{- float(r.points[0].y) + y_offset}" '
+                            f'x2="{-float(r.points[1].x) + x_offset - separating_distance}" '
+                            f'y2="{- float(r.points[1].y) + y_offset}" style="stroke:rgb{color};stroke-opacity:{alpha};'
+                            f'stroke-width:10"/>\n')
                 if env.modification == "shift":
-                    for l in range(1, env.number_of_led):
-                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                            .format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
-                                    float(r.points[1].x) + x_offset + l * env.separating_distance, - float(r.points[1].y) + y_offset, color, alpha))
+                    for led in range(1, env.number_of_led):
+                        f.write(f'<line x1="{float(r.points[0].x) + x_offset + led * env.separating_distance}" '
+                                f'y1="{- float(r.points[0].y) + y_offset}" '
+                                f'x2="{float(r.points[1].x) + x_offset + led * env.separating_distance}" '
+                                f'y2="{- float(r.points[1].y) + y_offset}" style="stroke:rgb{color};'
+                                f'stroke-opacity:{alpha};stroke-width:10"/>\n')
             r = array[-1]
+            # Draw last segment of all rays
             intersection = env.road.intersection(r)
             if intersection and not ray.terminated:
                 intersection = intersection[0]
-                f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                float(intersection.x) + x_offset, - float(intersection.y) + y_offset, color, alpha))
+                f.write(f'<line x1="{float(r.points[0].x) + x_offset}" y1="{- float(r.points[0].y) + y_offset}" '
+                        f'x2="{float(intersection.x) + x_offset}" y2="{- float(intersection.y) + y_offset}" '
+                        f'style="stroke:rgb{color};stroke-opacity:{alpha};stroke-width:10"/>\n')
                 if env.modification == "mirror":
-                    f.write(
-                    '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
-                                -float(intersection.x) + x_offset - separating_distance, - float(intersection.y) + y_offset, color, alpha))
+                    f.write(f'<line x1="{-float(r.points[0].x) + x_offset - separating_distance}" '
+                            f'y1="{- float(r.points[0].y) + y_offset}" '
+                            f'x2="{-float(intersection.x) + x_offset - separating_distance}" '
+                            f'y2="{- float(intersection.y) + y_offset}" style="stroke:rgb{color};'
+                            f'stroke-opacity:{alpha};stroke-width:10"/>\n')
                 if env.modification == "shift":
-                    for l in range(1, env.number_of_led):
-                        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>\n'
-                        .format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
-                                float(intersection.x) + x_offset + l * env.separating_distance, - float(intersection.y) + y_offset, color, alpha))
+                    for led in range(1, env.number_of_led):
+                        f.write(f'<line x1="{float(r.points[0].x) + x_offset + led * env.separating_distance}" '
+                                f'y1="{- float(r.points[0].y) + y_offset}" '
+                                f'x2="{float(intersection.x) + x_offset + led * env.separating_distance}" '
+                                f'y2="{- float(intersection.y) + y_offset}" style="stroke:rgb{color};'
+                                f'stroke-opacity:{alpha};stroke-width:10"/>\n')
 
             else:
                 if not ray.terminated:
                     x_diff = float(r.points[1].x - r.points[0].x)
                     y_diff = float(r.points[1].y - r.points[0].y)
                     length = math.sqrt(x_diff * x_diff + y_diff * y_diff)
-                    ratio = diag /length
+                    ratio = diag / length
                     x_diff = float(r.points[1].x - r.points[0].x) * ratio
                     y_diff = float(r.points[1].y - r.points[0].y) * ratio
-                    f.write(
-                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                        '\n'.format(float(r.points[0].x) + x_offset, - float(r.points[0].y) + y_offset,
-                                    float(r.points[0].x) + x_offset + x_diff,
-                                    -float(r.points[0].y) + y_offset - y_diff,
-                                    color, alpha))
+                    f.write(f'<line x1="{float(r.points[0].x) + x_offset}" y1="{- float(r.points[0].y) + y_offset}" '
+                            f'x2="{float(r.points[0].x) + x_offset + x_diff}" '
+                            f'y2="{-float(r.points[0].y) + y_offset - y_diff}" style="stroke:rgb{color};'
+                            f'stroke-opacity:{alpha};stroke-width:10"/>\n')
                     if env.modification == "mirror":
-                        f.write(
-                        '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                        '\n'.format(-float(r.points[0].x) + x_offset - separating_distance, - float(r.points[0].y) + y_offset,
-                                    -float(r.points[0].x) + x_offset - x_diff - separating_distance,
-                                    -float(r.points[0].y) + y_offset - y_diff,
-                                    color, alpha))
+                        f.write(f'<line x1="{-float(r.points[0].x) + x_offset - separating_distance}" '
+                                f'y1="{- float(r.points[0].y) + y_offset}" '
+                                f'x2="{-float(r.points[0].x) + x_offset - x_diff - separating_distance}" '
+                                f'y2="{-float(r.points[0].y) + y_offset - y_diff}" style="stroke:rgb{color};'
+                                f'stroke-opacity:{alpha};stroke-width:10"/>\n')
                     if env.modification == "shift":
-                        for l in range(1, env.number_of_led):
-                            f.write(
-                                '<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:rgb{4};stroke-opacity:{5};stroke-width:10"/>'
-                                '\n'.format(float(r.points[0].x) + x_offset + l * env.separating_distance, - float(r.points[0].y) + y_offset,
-                                            float(r.points[0].x) + x_offset + x_diff + l * env.separating_distance,
-                                            -float(r.points[0].y) + y_offset - y_diff,
-                                            color, alpha))
+                        for led in range(1, env.number_of_led):
+                            f.write(f'<line x1="{float(r.points[0].x) + x_offset + led * env.separating_distance}" '
+                                    f'y1="{- float(r.points[0].y) + y_offset}" '
+                                    f'x2="{float(r.points[0].x) + x_offset + x_diff + led * env.separating_distance}" '
+                                    f'y2="{-float(r.points[0].y) + y_offset - y_diff}" style="stroke:rgb{color};'
+                                    f'stroke-opacity:{alpha};stroke-width:10"/>\n')
 
-
-        f.write('<rect x="{0}" y="{1}" width="{2}" height="50" fill="gray"/>'
-                .format(env.road.p1.x + x_offset, -env.road.p1.y + y_offset,
-                        (env.road.p2.x - env.road.p1.x)))  # road
+        # Road
+        f.write(f'<rect x="{env.road.p1.x + x_offset}" y="{-env.road.p1.y + y_offset}" '
+                f'width="{(env.road.p2.x - env.road.p1.x)}" height="50" fill="gray"/>\n')
 
         if env.quality_criterion in ["illuminance uniformity", "weighted sum", "nsgaii"]:
             left_border = env.road_start
@@ -140,70 +162,72 @@ def draw(ind: Component, name: str, env: Environment):
             for segment in range(env.road_sections):
                 alpha = str(round(ind.segments_intensity_proportional[segment], 3))
                 color = "(250, 6, 22)"
-                f.write('<rect x="{0}" y="{1}" width="{2}" height="50" style="fill:rgb{3};fill-opacity:{4};"/>'
-                        .format(left_border + x_offset, -env.road.p1.y + y_offset,
-                                segments_size, color, alpha))
+                f.write(f'<rect x="{left_border + x_offset}" y="{-env.road.p1.y + y_offset}" width="{segments_size}" '
+                        f'height="50" style="fill:rgb{color};fill-opacity:{alpha};"/>')
                 left_border += segments_size
 
         # Base
-        f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-            ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
-            ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset))
+        f.write(f'<line x1="{ind.base.p1.x + x_offset}" y1="{-ind.base.p1.y + y_offset}" '
+                f'x2="{ind.base.p2.x + x_offset}" '
+                f'y2="{-ind.base.p2.y + y_offset}" style="stroke:gray;stroke-width:20"/>\n')
         if env.modification == "mirror":
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-            -ind.base.p1.x + x_offset - separating_distance, -ind.base.p1.y + y_offset,
-            -ind.base.p2.x + x_offset - separating_distance, -ind.base.p2.y + y_offset))
+            f.write(f'<line x1="{-ind.base.p1.x + x_offset - separating_distance}" y1="{-ind.base.p1.y + y_offset}" '
+                    f'x2="{-ind.base.p2.x + x_offset - separating_distance}" y2="{-ind.base.p2.y + y_offset}" '
+                    f'style="stroke:gray;stroke-width:20"/>\n')
         if env.modification == "shift":
-            for l in range(1, env.number_of_led):
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                ind.base.p1.x + x_offset + l * env.separating_distance, -ind.base.p1.y + y_offset,
-                ind.base.p2.x + x_offset + l * env.separating_distance, -ind.base.p2.y + y_offset))
-
+            for led in range(1, env.number_of_led):
+                f.write(f'<line x1="{ind.base.p1.x + x_offset + led * env.separating_distance}" '
+                        f'y1="{-ind.base.p1.y + y_offset}" '
+                        f'x2="{ind.base.p2.x + x_offset + led * env.separating_distance}" '
+                        f'y2="{-ind.base.p2.y + y_offset}" style="stroke:gray;stroke-width:20"/>')
 
         if env.configuration == "two connected":
             # right segment
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                ind.base.p2.x + x_offset, -ind.base.p2.y + y_offset,
-                float(ind.right_segment.p2.x) + x_offset, float(-ind.right_segment.p2.y) + y_offset))
+            f.write(f'<line x1="{ind.base.p2.x + x_offset}" y1="{-ind.base.p2.y + y_offset}" '
+                    f'x2="{float(ind.right_segment.p2.x) + x_offset}" y2="{float(-ind.right_segment.p2.y) + y_offset}" '
+                    f'style="stroke:gray;stroke-width:20"/>\n')
             if env.modification == "mirror":
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                -ind.base.p2.x + x_offset - separating_distance, -ind.base.p2.y + y_offset,
-                -float(ind.right_segment.p2.x) + x_offset - separating_distance, float(-ind.right_segment.p2.y) + y_offset))
+                f.write(f'<line x1="{-ind.base.p2.x + x_offset - separating_distance}" y1="{-ind.base.p2.y + y_offset}"'
+                        f' x2="{-float(ind.right_segment.p2.x) + x_offset - separating_distance}" '
+                        f'y2="{float(-ind.right_segment.p2.y) + y_offset}" style="stroke:gray;stroke-width:20"/>\n')
             if env.modification == "shift":
-                for l in range(1, env.number_of_led):
-                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                        ind.base.p2.x + x_offset + l * env.separating_distance, -ind.base.p2.y + y_offset,
-                        float(ind.right_segment.p2.x) + x_offset + l * env.separating_distance, float(-ind.right_segment.p2.y) + y_offset))
+                for led in range(1, env.number_of_led):
+                    f.write(f'<line x1="{ind.base.p2.x + x_offset + led * env.separating_distance}" '
+                            f'y1="{-ind.base.p2.y + y_offset}" '
+                            f'x2="{float(ind.right_segment.p2.x) + x_offset + led * env.separating_distance}" '
+                            f'y2="{float(-ind.right_segment.p2.y) + y_offset}" style="stroke:gray;stroke-width:20"/>')
             # left segment
-            f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                ind.base.p1.x + x_offset, -ind.base.p1.y + y_offset,
-                float(ind.left_segment.p2.x) + x_offset, float(-ind.left_segment.p2.y) + y_offset))
+            f.write(f'<line x1="{ind.base.p1.x + x_offset}" y1="{-ind.base.p1.y + y_offset}" '
+                    f'x2="{float(ind.left_segment.p2.x) + x_offset}" y2="{float(-ind.left_segment.p2.y) + y_offset}" '
+                    f'style="stroke:gray;stroke-width:20"/>\n')
             if env.modification == "mirror":
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                -ind.base.p1.x + x_offset - separating_distance, -ind.base.p1.y + y_offset,
-                -float(ind.left_segment.p2.x) + x_offset - separating_distance, float(-ind.left_segment.p2.y) + y_offset))
+                f.write(f'<line x1="{-ind.base.p1.x + x_offset - separating_distance}" y1="{-ind.base.p1.y + y_offset}"'
+                        f' x2="{-float(ind.left_segment.p2.x) + x_offset - separating_distance}" '
+                        f'y2="{float(-ind.left_segment.p2.y) + y_offset}" style="stroke:gray;stroke-width:20"/>')
             if env.modification == "shift":
-                for l in range(1, env.number_of_led):
-                    f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                    ind.base.p1.x + x_offset + l * env.separating_distance, -ind.base.p1.y + y_offset,
-                    float(ind.left_segment.p2.x) + x_offset + l * env.separating_distance, float(-ind.left_segment.p2.y) + y_offset))
+                for led in range(1, env.number_of_led):
+                    f.write(f'<line x1="{ind.base.p1.x + x_offset + led * env.separating_distance}" '
+                            f'y1="{-ind.base.p1.y + y_offset}" '
+                            f'x2="{float(ind.left_segment.p2.x) + x_offset + led * env.separating_distance}" '
+                            f'y2="{float(-ind.left_segment.p2.y) + y_offset}" style="stroke:gray;stroke-width:20"/>')
 
         if env.configuration == "multiple free":
             # reflective segments
             for segment in ind.reflective_segments:
-                f.write('<line x1="{0}" y1="{1}" x2="{2}" y2="{3}" style="stroke:gray;stroke-width:20"/>'.format(
-                    segment.p1.x + x_offset, -segment.p1.y + y_offset,
-                    float(segment.p2.x) + x_offset, float(-segment.p2.y) + y_offset))
+                f.write(f'<line x1="{segment.p1.x + x_offset}" y1="{-segment.p1.y + y_offset}" '
+                        f'x2="{float(segment.p2.x) + x_offset}" y2="{float(-segment.p2.y) + y_offset}" '
+                        f'style="stroke:gray;stroke-width:20"/>')
 
-
-        f.write('</svg>')
+        f.write(f'</svg>')
 
 
 def check_parameters_environment(road_start: int, road_end: int, road_depth: int,
                                  road_sections: int, criterion: str, cosine_error: str, reflective_factor: float,
                                  configuration: str, number_of_led: int, separating_distance: int,
                                  modification: str, weights: List[int], reflections_timeout: int) -> List[str]:
-
+    """
+    Check all parameters for environment if their values are valid.
+    """
     invalid = []
     if configuration not in ["multiple free", "two connected"]:
         invalid.append("configuration")
@@ -248,8 +272,10 @@ def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle
                                rotate_segment_prob: float, resize_segment_prob: float,
                                tilt_base_prob, base_length: int, base_slope: int, base_angle_limit_min: int,
                                base_angle_limit_max: int) -> List[str]:
+    """
+    Check all parameters for evolution if their values are valid.
+    """
     invalid = []
-
     if type(number_of_rays) != int or number_of_rays <= 0:
         invalid.append("number of rays")
     if ray_distribution not in ["uniform", "random"]:
@@ -259,7 +285,6 @@ def check_parameters_evolution(number_of_rays: int, ray_distribution: str, angle
         invalid.append("base length")
     if type(base_slope) != int or 0 > base_slope or base_slope > 180:
         invalid.append("base slope")
-
 
     if type(angle_lower_bound) != int or 90 > angle_lower_bound or angle_lower_bound > 180:
         invalid.append("angle lower bound")

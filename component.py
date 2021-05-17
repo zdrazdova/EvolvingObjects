@@ -50,6 +50,7 @@ class Component:
         self.intersections_on_intensity = 0
         self.no_of_reflections = 0
         self.segments_intensity = []
+        self.segments_intensity_proportional = []
         self.fitness_array = []
 
     def calculate_base(self):

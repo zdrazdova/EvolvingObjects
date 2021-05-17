@@ -1,11 +1,9 @@
 import random
-from math import factorial
-from typing import List
 
 from deap.base import Fitness
 
-from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, check_parameters_evolution, \
-    choose_unique
+from auxiliary import draw, log_stats_init, log_stats_append, check_parameters_environment, \
+    check_parameters_evolution, choose_unique
 from custom_geometry import compute_intersections, compute_reflections_two_segments, \
     compute_reflection_multiple_segments, recalculate_intersections
 from custom_operators import mutate_angle, mutate_length, shift_one_segment, rotate_one_segment, \
@@ -42,8 +40,10 @@ def evaluate(individual: Component, env: Environment):
     if env.quality_criterion == "illuminance uniformity":
         return illuminance_uniformity(individual.segments_intensity)
     if env.quality_criterion == "weighted sum":
-        individual.fitness_array = [efficiency(individual.original_rays), illuminance_uniformity(individual.segments_intensity),
-                                    obtrusive_light_elimination(individual.original_rays, road_intersections, env.number_of_led),
+        individual.fitness_array = [efficiency(individual.original_rays),
+                                    illuminance_uniformity(individual.segments_intensity),
+                                    obtrusive_light_elimination(individual.original_rays, road_intersections,
+                                                                env.number_of_led),
                                     -env.number_of_led*light_pollution(individual.original_rays)]
         weights = env.weights
         product = [x * y for x, y in zip(individual.fitness_array, weights)]
@@ -81,7 +81,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
     else:
         toolbox.register("select", tools.selTournament, tournsize=2)
 
-
     # Initiating first population
     pop = toolbox.population(n=population_size)
 
@@ -91,11 +90,6 @@ def evolution(env: Environment, number_of_rays: int, ray_distribution: str,
         fitnesses.append(evaluate(item, env))
     for ind, fit in zip(pop, fitnesses):
         ind.fitness = fit
-
-    # Rendering individuals in initial population as images
-    #for i in range(len(pop)):
-    #    draw(pop[i], f"{i}", env)
-    #print("Drawing initial population finished")
 
     if env.quality_criterion != "nsgaii":
         if env.configuration == "two connected":
@@ -257,13 +251,13 @@ def main():
     reflections_timeout = config.evaluation.reflections_timeout
     weights = config.evaluation.weights
 
-    number_of_LEDs = config.lamp.number_of_LEDs
+    number_of_leds = config.lamp.number_of_LEDs
     separating_distance = config.lamp.separating_distance
     modification = config.lamp.modification
 
     invalid_parameters = check_parameters_environment(road_start, road_end, road_depth,
                                                       road_sections, criterion, cosine_error, reflective_factor,
-                                                      configuration, number_of_LEDs, separating_distance, modification,
+                                                      configuration, number_of_leds, separating_distance, modification,
                                                       weights, reflections_timeout)
     if invalid_parameters:
         print(f"Invalid value for parameters {invalid_parameters}")
@@ -273,7 +267,7 @@ def main():
     # Init environment
     env = Environment(road_start, road_end, road_depth, road_sections,
                       criterion, cosine_error, reflective_factor, configuration,
-                      number_of_LEDs, separating_distance, modification, weights, reflections_timeout)
+                      number_of_leds, separating_distance, modification, weights, reflections_timeout)
 
     # Load parameters for LED
     number_of_rays = config.lamp.number_of_rays
